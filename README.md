@@ -85,6 +85,7 @@ npm install @convex-dev/workos
 ```bash
 npm install zod date-fns lucide-react clsx tailwind-merge
 npm install -D @types/node
+npm install framer-motion
 ```
 
 ### Verification
