@@ -26,7 +26,15 @@ In another terminal, initialize Convex Auth:
 npx @convex-dev/auth
 ```
 
-This configures `JWT_PRIVATE_KEY` and `JWKS` in your selected Convex deployment. Set the site URL to `http://localhost:3000` when prompted. Do not commit or share private keys.
+This configures `JWT_PRIVATE_KEY` and `JWKS` in your selected Convex deployment. Do not commit or share private keys.
+
+Set the required website URL explicitly in that same Convex deployment:
+
+```sh
+npx convex env set SITE_URL http://localhost:3000
+```
+
+`SITE_URL` must be the frontend address, not the Convex cloud or HTTP actions URL. It is required for email verification and recovery, including when users sign in with passwords. Adding it only to Next.js `.env.local` does not configure the Convex backend. Use your deployed frontend URL for production.
 
 Email verification and recovery use Resend. Create a Resend API key and verify a sending domain, then set these **in the Convex deployment's environment variables**, not in client code:
 
