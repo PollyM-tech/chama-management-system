@@ -1,7 +1,9 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { authTables } from "@convex-dev/auth/server";
 
 export default defineSchema({
+  ...authTables,
   chamas: defineTable({
     name: v.string(),
     description: v.optional(v.string()),
@@ -12,14 +14,14 @@ export default defineSchema({
       v.literal("quarterly"),
     ),
     totalPool: v.number(),
-    createdBy: v.string(),
+    createdBy: v.id("users"),
     createdAt: v.number(),
     isActive: v.boolean(),
   }),
 
   members: defineTable({
     chamaId: v.id("chamas"),
-    workosUserId: v.string(),
+    userId: v.id("users"),
     name: v.string(),
     email: v.string(),
     phone: v.string(),
@@ -35,7 +37,8 @@ export default defineSchema({
     mpesaNumber: v.optional(v.string()),
   })
     .index("by_chama", ["chamaId"])
-    .index("by_workos_user", ["workosUserId"])
+    .index("by_user", ["userId"])
+    .index("by_chama_user", ["chamaId", "userId"])
     .index("by_email", ["email"]),
 
   cycles: defineTable({

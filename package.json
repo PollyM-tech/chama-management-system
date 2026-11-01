@@ -6,11 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@convex-dev/workos": "^0.0.3",
-    "@workos-inc/authkit-nextjs": "^3.0.1",
+    "@auth/core": "^0.41.1",
+    "@convex-dev/auth": "^0.0.96",
     "clsx": "^2.1.1",
     "convex": "^1.39.1",
     "date-fns": "^4.4.0",
@@ -23,12 +25,16 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@testing-library/react": "^16.3.3",
     "@types/node": "^20.19.41",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "convex-test": "^0.0.66",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "jsdom": "^27.4.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.12"
   }
 }
