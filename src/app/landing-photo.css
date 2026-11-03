@@ -1447,3 +1447,172 @@
   vertical-align: middle;
   border-radius: 50%;
 }
+
+/* Tablet navigation and fluid layouts between the phone and desktop breakpoints. */
+@media (max-width: 950px) {
+  .landing-page-photo .landing-desktop-nav {
+    display: none;
+  }
+  .landing-page-photo .nav-create {
+    display: none;
+  }
+  .landing-page-photo .landing-header-actions {
+    margin-left: auto;
+  }
+  .landing-page-photo .landing-mobile-menu {
+    display: block;
+    position: relative;
+  }
+  .landing-page-photo .landing-mobile-menu summary {
+    display: flex;
+    list-style: none;
+    padding: 9px;
+    color: #144527;
+    background: #fffffff0;
+    border-radius: 6px;
+  }
+  .landing-page-photo .landing-mobile-menu summary::-webkit-details-marker {
+    display: none;
+  }
+  .landing-page-photo .landing-mobile-menu nav {
+    position: absolute;
+    top: 45px;
+    right: 0;
+    width: min(240px, 80vw);
+    padding: 12px;
+    background: #fff;
+    border: 1px solid #e2ebdc;
+    border-radius: 9px;
+    box-shadow: 0 9px 20px #143c2520;
+    display: flex;
+    flex-direction: column;
+    font-size: 13px;
+  }
+  .landing-page-photo .landing-mobile-menu nav a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+  }
+  .landing-page-photo .landing-mobile-menu nav a:last-child {
+    background: #edf5e8;
+    color: #1b6b32;
+    border-radius: 5px;
+  }
+  .landing-page-photo .phone-lineup {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+  }
+  .landing-page-photo .hero-copy h1 {
+    overflow-wrap: anywhere;
+  }
+}
+@media (min-width: 651px) and (max-width: 950px) {
+  .landing-page-photo .landing-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+    padding-top: 15px;
+    padding-bottom: 65px;
+  }
+  .landing-page-photo .hero-copy {
+    text-align: center;
+  }
+  .landing-page-photo .hero-copy h1 {
+    font-size: clamp(40px, 6vw, 54px);
+  }
+  .landing-page-photo .hero-copy > p {
+    margin-inline: auto;
+    max-width: 480px;
+    font-size: 14px;
+  }
+  .landing-page-photo .hero-actions,
+  .landing-page-photo .hero-assurances {
+    justify-content: center;
+  }
+  .landing-page-photo .hero-actions .landing-button {
+    padding: 14px 22px;
+    font-size: 13px;
+  }
+  .landing-page-photo .hero-assurances strong {
+    font-size: 11px;
+  }
+  .landing-page-photo .hero-assurances small {
+    font-size: 9px;
+  }
+  .landing-page-photo .demo-stage {
+    width: min(590px, 100%);
+    margin-inline: auto;
+  }
+  .landing-page-photo .demo-window {
+    min-height: 480px;
+    grid-template-columns: 110px minmax(0, 1fr);
+  }
+  .landing-page-photo .demo-main {
+    padding: 17px;
+  }
+  .landing-page-photo .demo-balance strong {
+    font-size: 28px;
+  }
+  .landing-page-photo .demo-panel h3 {
+    font-size: 9px;
+  }
+  .landing-page-photo .demo-payment > span:not(.demo-mini-avatar),
+  .landing-page-photo .demo-payment strong {
+    font-size: 7px;
+  }
+  .landing-page-photo .hero-green-shape {
+    top: 460px;
+    width: 120%;
+    right: -50%;
+  }
+  .landing-page-photo .hero-photograph {
+    top: 285px;
+    bottom: auto;
+    width: 100%;
+    height: 280px;
+  }
+  .landing-page-photo .feature-ribbon {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 17px 0;
+  }
+  .landing-page-photo .feature-ribbon > a:nth-child(2) {
+    border: 0;
+  }
+  .landing-page-photo .steps-grid {
+    gap: 20px;
+  }
+  .landing-page-photo .step-dashed-arrow {
+    display: none;
+  }
+  .landing-page-photo .trust-banner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .landing-page-photo .voices-grid {
+    gap: 16px;
+  }
+}
+@media (max-width: 360px) {
+  .landing-page-photo .landing-container {
+    width: calc(100% - 24px);
+  }
+  .landing-page-photo .landing-brand {
+    font-size: 17px;
+  }
+  .landing-page-photo .landing-header {
+    gap: 7px;
+  }
+  .landing-page-photo .hero-actions {
+    flex-wrap: wrap;
+  }
+  .landing-page-photo .hero-assurances {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .landing-page-photo .hero-copy h1 {
+    font-size: 34px;
+  }
+  .landing-page-photo .feature-ribbon {
+    gap: 0;
+  }
+}

@@ -4,7 +4,7 @@ A savings group management app using Next.js 16, React 19, TypeScript, Tailwind 
 
 ## Current status
 
-Implemented: email/password registration and login, required email verification, password recovery, logout, backend session validation, chama creation, and membership authorization. The financial modules are placeholders; their backend workflows and M-Pesa integration are not implemented yet.
+Implemented: authentication, group memberships, the twelve-section responsive workspace, analytics, contribution cycles and partial payments, loan review/disbursement/repayment records, expenses, reconciliation, investments, dividends, voting, reporting, and officer email/WhatsApp invitations. Live M-Pesa/bank transfer execution is not enabled. See [the guide implementation matrix](docs/implementation.md) for behavior, permissions, deployment, and external-service requirements.
 
 Authentication runs in Convex Auth. WorkOS is no longer used. Next.js handles the login interface and auth cookie proxy; Convex validates credentials, issues sessions, and checks access to application data.
 
@@ -73,12 +73,14 @@ Roles belong to a membership in a particular chama, not globally to the user:
 | Read own profile or list own active groups | Authenticated, verified user |
 | Create a group | Authenticated, verified user; becomes admin only of the new group |
 | Read a group | Active membership in that active group |
-| List member profiles | Admin, treasurer, or secretary in that group |
-| Add members, change roles, deactivate/reactivate members | Admin in that group |
+| Read member contacts | Admin/chairperson, treasurer, or secretary in that group |
+| Create or revoke invitations | Admin/chairperson, treasurer, or secretary in that group |
+| Change roles, deactivate/reactivate members | Admin/chairperson in that group |
+| Record payments, expenses, repayments, and reconciliation | Admin/chairperson or treasurer in that group |
 
-Admins add existing verified users by email using `members.add`. Memberships cannot be duplicated. `members.updateAccess` prevents removing or demoting the last active admin. Role changes and deactivation take effect on the next backend request. Registration alone grants no access to existing groups. Member-management UI is deferred; these operations are currently backend APIs.
+Members join through an email or WhatsApp invitation created in the Members section. Links expire in seven days, can be revoked, and grant only the member role after email verification. Memberships cannot be duplicated. `members.updateAccess` prevents removing or demoting the last active admin/chairperson. Role changes and deactivation take effect on the next backend request. Registration alone grants no access to existing groups.
 
-The Next.js proxy protects application routes, and the dashboard layout also calls the backend. These redirects improve navigation; backend guards enforce authorization even for direct API calls. Future finance, contribution, loan, report, and payment functions must use these guards and check that every referenced record belongs to the authorized chama.
+The Next.js proxy protects application routes, and the workspace layout also calls the backend. These redirects improve navigation; backend guards enforce authorization even for direct API calls. Financial and membership mutations check every referenced record's group. See `docs/implementation.md` for the complete permission matrix and accounting behavior.
 
 ## Checks
 
@@ -89,10 +91,10 @@ npm test
 npm run build
 ```
 
-Backend tests use `convex-test` with isolated in-memory data. They cover unauthenticated calls, email verification, group isolation, roles, session revocation and expiry, deactivated membership, and last-admin protection. A real deployment and configured email service are required to test actual email delivery and browser sessions end to end.
+Backend tests use `convex-test` with isolated in-memory data. They cover authentication, group isolation, roles, session revocation, last-admin protection, partial and duplicate payments, loan approvals/repayments, expenses, reconciliation, dividends, voting, and invitation creation/acceptance/expiry. Resend delivery is mocked in tests. A real deployment and configured email service are required for end-to-end delivery and browser-session testing.
 
 ## Deployment
 
 Configure a separate production Convex deployment, initialize its auth keys, set its email credentials and production `SITE_URL`, and deploy the backend. Configure the matching public Convex cloud/site URLs in your Next.js hosting environment before building. Convex Auth's Next.js server integration is experimental; see the [official setup guide](https://labs.convex.dev/auth/setup).
 
-The schema now links memberships with `userId: Id<"users">` instead of `workosUserId` and types chama `createdBy` as a Convex user ID. Existing WorkOS-backed data needs an explicit migration before this schema can be deployed; this checkout has no configured deployment or migration source.
+The schema links memberships with `userId: Id<"users">` instead of `workosUserId` and types chama `createdBy` as a Convex user ID. Existing WorkOS-backed data needs an explicit migration before using this schema. The added workspace tables are applied by `npx convex dev --once` to the selected development deployment.

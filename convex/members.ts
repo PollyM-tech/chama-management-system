@@ -4,6 +4,7 @@ import { requireMembership } from "./lib/auth";
 
 const role = v.union(
   v.literal("admin"),
+  v.literal("chairperson"),
   v.literal("treasurer"),
   v.literal("secretary"),
   v.literal("member"),
@@ -12,7 +13,12 @@ const role = v.union(
 export const list = query({
   args: { chamaId: v.id("chamas") },
   handler: async (ctx, { chamaId }) => {
-    await requireMembership(ctx, chamaId, ["admin", "treasurer", "secretary"]);
+    await requireMembership(ctx, chamaId, [
+      "admin",
+      "chairperson",
+      "treasurer",
+      "secretary",
+    ]);
     return ctx.db
       .query("members")
       .withIndex("by_chama", (q) => q.eq("chamaId", chamaId))
@@ -24,7 +30,7 @@ export const list = query({
 export const add = mutation({
   args: { chamaId: v.id("chamas"), email: v.string(), role },
   handler: async (ctx, args) => {
-    await requireMembership(ctx, args.chamaId, ["admin"]);
+    await requireMembership(ctx, args.chamaId, ["admin", "chairperson"]);
     const user = await ctx.db
       .query("users")
       .withIndex("email", (q) => q.eq("email", args.email.trim().toLowerCase()))
@@ -56,18 +62,25 @@ export const updateAccess = mutation({
   handler: async (ctx, args) => {
     const target = await ctx.db.get(args.memberId);
     if (!target) throw new ConvexError("FORBIDDEN");
-    await requireMembership(ctx, target.chamaId, ["admin"]);
+    const { user, member: actor } = await requireMembership(
+      ctx,
+      target.chamaId,
+      ["admin", "chairperson"],
+    );
     if (
       target.isActive &&
-      target.role === "admin" &&
-      (!args.isActive || args.role !== "admin")
+      ["admin", "chairperson"].includes(target.role) &&
+      (!args.isActive || !["admin", "chairperson"].includes(args.role))
     ) {
       const admins = await ctx.db
         .query("members")
         .withIndex("by_chama", (q) => q.eq("chamaId", target.chamaId))
         .filter((q) =>
           q.and(
-            q.eq(q.field("role"), "admin"),
+            q.or(
+              q.eq(q.field("role"), "admin"),
+              q.eq(q.field("role"), "chairperson"),
+            ),
             q.eq(q.field("isActive"), true),
           ),
         )
@@ -77,6 +90,13 @@ export const updateAccess = mutation({
     await ctx.db.patch(args.memberId, {
       role: args.role,
       isActive: args.isActive,
+    });
+    await ctx.db.insert("auditEvents", {
+      chamaId: target.chamaId,
+      actorId: user._id,
+      actorName: actor.name,
+      action: `Changed ${target.name}'s access to ${args.role}, ${args.isActive ? "active" : "inactive"}`,
+      createdAt: Date.now(),
     });
   },
 });

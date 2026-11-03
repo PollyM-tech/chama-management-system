@@ -8,7 +8,7 @@ export function BrandLogo({
   size = "compact",
 }: {
   href?: string;
-  size?: "compact" | "large" | "navigation";
+  size?: "compact" | "large" | "navigation" | "header";
 }) {
   if (size === "navigation") {
     return (
@@ -37,13 +37,15 @@ export function BrandLogo({
     <Link
       href={href}
       aria-label={`${BRAND_NAME} home`}
-      className={`relative block shrink-0 overflow-hidden rounded bg-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700 ${size === "large" ? "h-36 w-64" : "h-28 w-48"}`}
+      className={`relative block shrink-0 overflow-hidden rounded bg-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700 ${size === "large" ? "h-36 w-64" : size === "header" ? "h-20 w-36" : "h-28 w-48"}`}
     >
       <Image
         src={logo}
         alt={`${BRAND_NAME} — ${BRAND_TAGLINE}`}
-        className={`absolute left-0 h-auto w-full ${size === "large" ? "-top-8" : "-top-6"}`}
-        sizes={size === "large" ? "256px" : "192px"}
+        className={`absolute left-0 h-auto w-full ${size === "large" ? "-top-8" : size === "header" ? "-top-5" : "-top-6"}`}
+        sizes={
+          size === "large" ? "256px" : size === "header" ? "144px" : "192px"
+        }
         loading="eager"
       />
     </Link>

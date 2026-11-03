@@ -11,10 +11,13 @@
 import type * as auth from "../auth.js";
 import type * as chamas from "../chamas.js";
 import type * as http from "../http.js";
+import type * as invitations from "../invitations.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_email from "../lib/email.js";
+import type * as lib_ledger from "../lib/ledger.js";
 import type * as members from "../members.js";
 import type * as users from "../users.js";
+import type * as workspace from "../workspace.js";
 
 import type {
   ApiFromModules,
@@ -26,10 +29,13 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   chamas: typeof chamas;
   http: typeof http;
+  invitations: typeof invitations;
   "lib/auth": typeof lib_auth;
   "lib/email": typeof lib_email;
+  "lib/ledger": typeof lib_ledger;
   members: typeof members;
   users: typeof users;
+  workspace: typeof workspace;
 }>;
 
 /**

@@ -7,6 +7,7 @@ import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { api } from "../../../convex/_generated/api";
 import { BrandLogo } from "@/components/brand-logo";
 import { BRAND_TAGLINE } from "../../../shared/brand";
+import { safeReturnPath } from "../../../shared/workspace";
 
 type Step =
   | "signIn"
@@ -41,8 +42,9 @@ function SignInForm() {
   useEffect(() => {
     // Load the authenticated server layout with fresh cookies after login,
     // verification, or recovery, instead of reusing prefetched route state.
-    if (sessionValid) window.location.replace("/dashboard");
-  }, [sessionValid]);
+    if (sessionValid)
+      window.location.replace(safeReturnPath(searchParams.get("next")));
+  }, [sessionValid, searchParams]);
 
   function changeStep(next: Step) {
     setError("");

@@ -17,6 +17,10 @@ export default defineSchema({
     createdBy: v.id("users"),
     createdAt: v.number(),
     isActive: v.boolean(),
+    interestRate: v.optional(v.number()),
+    lateFee: v.optional(v.number()),
+    loanTermMonths: v.optional(v.number()),
+    rules: v.optional(v.string()),
   }),
 
   members: defineTable({
@@ -27,6 +31,7 @@ export default defineSchema({
     phone: v.string(),
     role: v.union(
       v.literal("admin"),
+      v.literal("chairperson"),
       v.literal("treasurer"),
       v.literal("secretary"),
       v.literal("member"),
@@ -73,6 +78,7 @@ export default defineSchema({
     mpesaTransactionId: v.optional(v.string()),
     recordedBy: v.string(),
     notes: v.optional(v.string()),
+    expectedAmount: v.optional(v.number()),
   })
     .index("by_chama", ["chamaId"])
     .index("by_member", ["memberId"])
@@ -101,6 +107,7 @@ export default defineSchema({
     approvedBy: v.optional(v.string()),
     rejectedReason: v.optional(v.string()),
     guarantors: v.optional(v.array(v.id("members"))),
+    termMonths: v.optional(v.number()),
   })
     .index("by_chama", ["chamaId"])
     .index("by_member", ["memberId"])
@@ -140,8 +147,11 @@ export default defineSchema({
     performedBy: v.string(),
     createdAt: v.number(),
     balance: v.number(),
+    paymentMethod: v.optional(v.string()),
+    paymentReference: v.optional(v.string()),
   })
     .index("by_chama", ["chamaId"])
+    .index("by_chama_reference", ["chamaId", "paymentReference"])
     .index("by_chama_date", ["chamaId", "createdAt"]),
 
   investments: defineTable({
@@ -183,7 +193,84 @@ export default defineSchema({
     message: v.string(),
     isRead: v.boolean(),
     createdAt: v.number(),
+    referenceKey: v.optional(v.string()),
   })
     .index("by_member", ["memberId"])
     .index("by_member_unread", ["memberId", "isRead"]),
+  contributionPayments: defineTable({
+    chamaId: v.id("chamas"),
+    memberId: v.id("members"),
+    cycleId: v.id("cycles"),
+    amount: v.number(),
+    paymentMethod: v.string(),
+    reference: v.optional(v.string()),
+    recordedBy: v.id("users"),
+    createdAt: v.number(),
+  }).index("by_chama", ["chamaId"]),
+  invitations: defineTable({
+    chamaId: v.id("chamas"),
+    token: v.string(),
+    email: v.optional(v.string()),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("accepted"),
+      v.literal("revoked"),
+    ),
+    acceptedBy: v.optional(v.id("users")),
+    channel: v.union(v.literal("email"), v.literal("whatsapp")),
+  })
+    .index("by_token", ["token"])
+    .index("by_chama", ["chamaId"]),
+  expenses: defineTable({
+    chamaId: v.id("chamas"),
+    description: v.string(),
+    category: v.string(),
+    amount: v.number(),
+    recordedBy: v.id("users"),
+    createdAt: v.number(),
+  }).index("by_chama", ["chamaId"]),
+  reconciliations: defineTable({
+    chamaId: v.id("chamas"),
+    ledgerBalance: v.number(),
+    actualBalance: v.number(),
+    difference: v.number(),
+    notes: v.string(),
+    recordedBy: v.id("users"),
+    createdAt: v.number(),
+  }).index("by_chama", ["chamaId"]),
+  polls: defineTable({
+    chamaId: v.id("chamas"),
+    question: v.string(),
+    options: v.array(v.string()),
+    endsAt: v.number(),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+  }).index("by_chama", ["chamaId"]),
+  votes: defineTable({
+    pollId: v.id("polls"),
+    memberId: v.id("members"),
+    choice: v.number(),
+  })
+    .index("by_poll", ["pollId"])
+    .index("by_poll_member", ["pollId", "memberId"]),
+  dividends: defineTable({
+    chamaId: v.id("chamas"),
+    investmentId: v.id("investments"),
+    memberId: v.id("members"),
+    amount: v.number(),
+    recordedBy: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_chama", ["chamaId"])
+    .index("by_investment", ["investmentId"]),
+  auditEvents: defineTable({
+    chamaId: v.id("chamas"),
+    actorId: v.id("users"),
+    actorName: v.string(),
+    action: v.string(),
+    createdAt: v.number(),
+  }).index("by_chama", ["chamaId"]),
 });

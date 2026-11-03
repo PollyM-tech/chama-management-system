@@ -26,11 +26,13 @@ export default async function DashboardLayout({
   }
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
-      <header className="flex items-center justify-between border-b border-zinc-200 bg-white px-6 py-4">
-        <BrandLogo href="/dashboard" />
+      <header className="workspace-app-header flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-2 sm:px-6">
+        <BrandLogo href="/dashboard" size="header" />
         <SignOutButton />
       </header>
-      <main className="mx-auto max-w-5xl px-6 py-10">{children}</main>
+      <main className="mx-auto w-full max-w-[1440px] px-3 py-5 sm:px-6 sm:py-7 lg:px-8">
+        {children}
+      </main>
     </div>
   );
 }
