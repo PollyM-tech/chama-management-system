@@ -57,7 +57,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <h1 className="text-3xl font-semibold">
+      <h1 className="text-2xl font-semibold sm:text-3xl [overflow-wrap:anywhere]">
         Welcome{user?.name ? `, ${user.name}` : ""}
       </h1>
       <p className="mt-2 text-zinc-600">
@@ -79,12 +79,12 @@ export default function DashboardPage() {
             <Link
               key={chama._id}
               href={groupDashboardPath(chama._id)}
-              className="group rounded-xl border border-zinc-200 bg-white p-6 transition hover:border-emerald-500 hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"
+              className="group min-w-0 rounded-xl border border-zinc-200 bg-white p-6 transition hover:border-emerald-500 hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"
             >
               <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
                 <Users size={21} />
               </span>
-              <h2 className="text-lg font-semibold">{chama.name}</h2>
+              <h2 className="text-lg font-semibold [overflow-wrap:anywhere]">{chama.name}</h2>
               <p className="mt-2 text-sm text-zinc-600">
                 Your role: {chama.role}
               </p>

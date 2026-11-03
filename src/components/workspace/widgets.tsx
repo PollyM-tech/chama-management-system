@@ -236,7 +236,12 @@ export function Table({
   empty?: string;
 }) {
   return rows.length ? (
-    <div className="workspace-table-scroll">
+    <div
+      className="workspace-table-scroll"
+      role="region"
+      aria-label="Records table, scroll horizontally for more columns"
+      tabIndex={0}
+    >
       <table className="workspace-table">
         <thead>
           <tr>

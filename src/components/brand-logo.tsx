@@ -37,7 +37,7 @@ export function BrandLogo({
     <Link
       href={href}
       aria-label={`${BRAND_NAME} home`}
-      className={`relative block shrink-0 overflow-hidden rounded bg-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700 ${size === "large" ? "h-36 w-64" : size === "header" ? "h-20 w-36" : "h-28 w-48"}`}
+      className={`relative block max-w-full shrink-0 overflow-hidden rounded bg-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700 ${size === "large" ? "h-36 w-64" : size === "header" ? "h-20 w-36" : "h-28 w-48"}`}
     >
       <Image
         src={logo}

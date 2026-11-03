@@ -11,7 +11,7 @@ export function SignOutButton() {
     <div>
       <button
         disabled={busy}
-        className="text-sm font-medium text-emerald-800 disabled:opacity-50"
+        className="min-h-11 px-2 text-sm font-medium text-emerald-800 disabled:opacity-50"
         onClick={async () => {
           setBusy(true);
           setError(false);

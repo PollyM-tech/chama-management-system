@@ -1449,7 +1449,7 @@
 }
 
 /* Tablet navigation and fluid layouts between the phone and desktop breakpoints. */
-@media (max-width: 950px) {
+@media (max-width: 1100px) {
   .landing-page-photo .landing-desktop-nav {
     display: none;
   }
@@ -1614,5 +1614,75 @@
   }
   .landing-page-photo .feature-ribbon {
     gap: 0;
+  }
+}
+
+/* Prevent content-sized grid tracks from widening phone and tablet layouts. */
+.landing-page-photo .landing-hero > *,
+.landing-page-photo .demo-main,
+.landing-page-photo .demo-metrics > *,
+.landing-page-photo .demo-bottom-grid > *,
+.landing-page-photo .trust-banner > *,
+.landing-page-photo .steps-grid > *,
+.landing-page-photo .voices-grid > * {
+  min-width: 0;
+}
+.landing-page-photo .hero-actions {
+  flex-wrap: wrap;
+}
+@media (min-width: 951px) and (max-width: 1200px) {
+  .landing-page-photo .landing-desktop-nav {
+    gap: 14px;
+    margin-left: 0;
+    padding-inline: 10px;
+    font-size: 12px;
+  }
+  .landing-page-photo .landing-header {
+    gap: 12px;
+  }
+  .landing-page-photo .nav-create {
+    padding-inline: 15px;
+  }
+}
+@media (max-width: 650px) {
+  .landing-page-photo .landing-header {
+    gap: 10px;
+  }
+  .landing-page-photo .demo-window {
+    grid-template-columns: 76px minmax(0, 1fr);
+    transform: none;
+  }
+  .landing-page-photo .hero-actions .landing-button,
+  .landing-page-photo .landing-login,
+  .landing-page-photo .landing-mobile-menu summary {
+    min-height: 44px;
+  }
+  .landing-page-photo .hero-actions {
+    gap: 12px;
+  }
+  .landing-page-photo .demo-bottom-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .landing-page-photo .demo-payment > span:not(.demo-mini-avatar),
+  .landing-page-photo .demo-payment strong,
+  .landing-page-photo .demo-progress > div:first-child {
+    font-size: 10px;
+  }
+  .landing-page-photo .demo-panel h3 {
+    font-size: 12px;
+  }
+  .landing-page-photo .demo-panel > a {
+    font-size: 11px;
+    min-height: 44px;
+  }
+  .landing-page-photo .demo-payment small {
+    font-size: 8px;
+  }
+  .landing-page-photo .summary-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .landing-page-photo .landing-pricing {
+    flex-wrap: wrap;
+    gap: 16px;
   }
 }

@@ -92,13 +92,13 @@ function SignInForm() {
     "mt-2 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-zinc-900 focus:outline-emerald-700";
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-6 py-16 text-zinc-900">
-      <section className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
+    <main className="flex min-h-dvh items-center justify-center bg-zinc-50 px-4 py-6 sm:px-6 sm:py-16 text-zinc-900">
+      <section className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-8">
         <div className="mb-8 flex justify-center">
           <BrandLogo size="large" />
         </div>
         <h1 className="text-2xl font-semibold">{titles[step]}</h1>
-        <p className="mt-2 text-sm text-zinc-600">
+        <p className="mt-2 text-sm text-zinc-600 [overflow-wrap:anywhere]">
           {codeStep
             ? `Enter the eight-digit code sent to ${email}. Codes expire after 10 minutes.`
             : step === "reset"

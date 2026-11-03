@@ -757,6 +757,83 @@
     font-size: 15px;
   }
 }
+/* Keep intrinsic content inside cards, including long names and references. */
+.workspace-content,
+.workspace-card,
+.workspace-stat,
+.workspace-poll,
+.workspace-notification {
+  overflow-wrap: anywhere;
+}
+.workspace-block-title,
+.workspace-topline {
+  flex-wrap: wrap;
+}
+.workspace-chart-values {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.workspace-table-scroll {
+  overscroll-behavior-x: contain;
+}
+.workspace-table-scroll:focus-visible {
+  outline: 2px solid #208b4b;
+  outline-offset: 3px;
+}
+/* Touch devices need readable fields without Safari zooming on focus. */
+@media (max-width: 760px), (pointer: coarse) {
+  .workspace-field input,
+  .workspace-field select,
+  .workspace-field textarea,
+  .workspace-link-box input,
+  .workspace-table td select {
+    font-size: 16px;
+    min-height: 44px;
+  }
+  .workspace-button,
+  .workspace-button.small,
+  .workspace-sidebar nav a {
+    min-height: 44px;
+  }
+}
+@media (max-width: 600px) {
+  .workspace-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .workspace-field.full,
+  .workspace-form-footer {
+    grid-column: 1;
+  }
+  .workspace-report-tools .workspace-field {
+    max-width: none;
+  }
+  .workspace-chart {
+    gap: 5px;
+  }
+  .workspace-form-footer > .workspace-button {
+    width: 100%;
+  }
+  .workspace-notification > div {
+    flex-basis: 100%;
+  }
+}
+@media (max-width: 359px) {
+  .workspace-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .workspace-balance {
+    padding: 18px;
+  }
+  .workspace-balance > strong {
+    font-size: 27px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-layout * {
+    transition: none;
+  }
+}
+
 @media print {
   body {
     background: #fff !important;
