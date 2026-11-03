@@ -96,6 +96,72 @@ async function fixture() {
 }
 
 describe("backend authentication and authorization", () => {
+  test("group dashboard uses only authorized group records and paid contributions", async () => {
+    const { t, admin, ids } = await fixture();
+    await t.run(async (ctx) => {
+      const cycleId = await ctx.db.insert("cycles", {
+        chamaId: ids.chama,
+        name: "Current cycle",
+        startDate: 1,
+        dueDate: 2,
+        contributionAmount: 1000,
+        status: "open",
+      });
+      for (const status of ["paid", "pending"] as const)
+        await ctx.db.insert("contributions", {
+          chamaId: ids.chama,
+          cycleId,
+          memberId: ids.regularMember,
+          amount: 1000,
+          dueDate: 2,
+          status,
+          recordedBy: ids.admin,
+        });
+      await ctx.db.insert("transactions", {
+        chamaId: ids.chama,
+        type: "contribution",
+        amount: 1000,
+        direction: "credit",
+        description: "Our group payment",
+        performedBy: ids.admin,
+        createdAt: 2,
+        balance: 1000,
+      });
+      await ctx.db.insert("transactions", {
+        chamaId: ids.otherChama,
+        type: "contribution",
+        amount: 9000,
+        direction: "credit",
+        description: "Another group payment",
+        performedBy: ids.outsider,
+        createdAt: 3,
+        balance: 9000,
+      });
+    });
+    const dashboard = await admin.query(api.chamas.dashboard, {
+      chamaId: ids.chama,
+    });
+    expect(dashboard.chama.name).toBe("Group A");
+    expect(dashboard.role).toBe("admin");
+    expect(dashboard.memberCount).toBe(2);
+    expect(dashboard.contributionsTotal).toBe(1000);
+    expect(dashboard.recentActivity.map((item) => item.description)).toEqual([
+      "Our group payment",
+    ]);
+  });
+
+  test("group dashboards reject anonymous users, nonmembers, and invalid IDs", async () => {
+    const { t, outsider, admin, ids } = await fixture();
+    await expect(
+      t.query(api.chamas.dashboard, { chamaId: ids.chama }),
+    ).rejects.toThrow("UNAUTHENTICATED");
+    await expect(
+      outsider.query(api.chamas.dashboard, { chamaId: ids.chama }),
+    ).rejects.toThrow("FORBIDDEN");
+    await expect(
+      admin.query(api.chamas.dashboard, { chamaId: "not-a-group-id" }),
+    ).rejects.toThrow("FORBIDDEN");
+  });
   test("rejects unauthenticated queries and mutations", async () => {
     const { t, ids } = await fixture();
     await expect(t.query(api.users.current, {})).rejects.toThrow(

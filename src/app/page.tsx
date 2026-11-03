@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -10,7 +11,6 @@ import {
   ClipboardList,
   FileChartColumn,
   HandCoins,
-  HeartHandshake,
   Menu,
   MessageCircle,
   ShieldCheck,
@@ -21,6 +21,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { DemoDashboard } from "@/components/landing/demo-dashboard";
 import { MobileShowcase } from "@/components/landing/mobile-showcase";
 import "./landing.css";
+import "./landing-photo.css";
 
 export const metadata: Metadata = {
   title: { absolute: "SmartChama — Manage Together. Grow Together." },
@@ -39,11 +40,20 @@ const links = [
 
 export default function Home() {
   return (
-    <div className="landing-page">
+    <div className="landing-page landing-page-photo">
       <a className="landing-skip-link" href="#main-content">
         Skip to content
       </a>
       <div className="landing-top">
+        <div className="hero-photograph" aria-hidden="true">
+          <Image
+            src="/images/chama-community.png"
+            alt=""
+            fill
+            sizes="(max-width: 650px) 100vw, 70vw"
+            preload
+          />
+        </div>
         <div className="hero-green-shape" aria-hidden="true" />
         <header className="landing-header landing-container">
           <BrandLogo size="navigation" />
@@ -88,25 +98,25 @@ export default function Home() {
           >
             <div className="hero-copy">
               <span className="hero-eyebrow">
-                <span className="eyebrow-dot" /> Built for Kenyan chamas{" "}
+                Built for Modern Kenyan Chamas{" "}
                 <span role="img" aria-label="Kenya">
                   🇰🇪
                 </span>
               </span>
               <h1 id="hero-heading">
-                Manage your chama
+                Manage Your Chama
                 <br />
                 with{" "}
                 <span>
-                  clarity, trust
+                  Clarity, Trust
                   <br />
-                  and speed.
+                  and Speed.
                 </span>
               </h1>
               <p>
-                Good things grow when you grow together. Give your chama one
-                shared place for its members, its savings, and its next big
-                step.
+                Bring your members together with a clearer view of your chama.
+                Explore contributions, loans, and reporting in one shared
+                dashboard. Less confusion. More moving forward, together.
               </p>
               <div className="hero-actions">
                 <Link href={signUp} className="landing-button button-green">
@@ -153,18 +163,18 @@ export default function Home() {
               {
                 icon: ShieldCheck,
                 title: "Transparent",
-                text: "Shared accountability",
+                text: "Transactions",
               },
               {
                 icon: HandCoins,
                 title: "Easy",
-                text: "Savings & loan previews",
+                text: "Loan tracking",
               },
-              { icon: BookOpenCheck, title: "Clear", text: "Member records" },
+              { icon: BookOpenCheck, title: "Clean", text: "Member records" },
               {
                 icon: FileChartColumn,
-                title: "Insightful",
-                text: "Reporting previews",
+                title: "Reports",
+                text: "At a glance",
               },
             ].map(({ icon: Icon, title, text }) => (
               <a href="#mobile" key={title}>
@@ -188,11 +198,10 @@ export default function Home() {
         aria-labelledby="how-heading"
       >
         <div className="section-heading">
-          <span className="section-kicker">A SIMPLE START</span>
+          <span className="section-kicker">SIMPLE PROCESS</span>
           <h2 id="how-heading">
-            From chama setup to a shared sense of direction.
+            From Chama Setup to Daily Management in Minutes
           </h2>
-          <p>Less back and forth. More moving forward, together.</p>
         </div>
         <div className="steps-grid">
           {[
@@ -205,13 +214,13 @@ export default function Home() {
             {
               number: "02",
               icon: Wallet,
-              title: "Bring members together",
+              title: "Invite your members",
               text: "Your administrator adds verified members and assigns the right roles for the group.",
             },
             {
               number: "03",
               icon: ChartNoAxesCombined,
-              title: "See what’s ahead",
+              title: "Manage everything",
               text: "Explore our vision for clearer contributions, loans, and reports in the interactive preview.",
             },
           ].map(({ number, icon: Icon, title, text }) => (
@@ -234,11 +243,11 @@ export default function Home() {
 
       <section id="about" className="trust-banner landing-container">
         <div>
-          <span className="section-kicker">LESS GUESSWORK. MORE TOGETHER.</span>
+          <span className="section-kicker">STOP MANAGING MONEY BLINDLY</span>
           <h2>
-            Give your chama a dashboard
+            Give Your Chama a Dashboard
             <br />
-            everyone can trust.
+            Everyone Can Trust.
           </h2>
           <p>
             SmartChama starts with people: a clear group structure, verified
@@ -251,7 +260,7 @@ export default function Home() {
         </div>
         <div className="summary-preview">
           <div className="summary-heading">
-            <h3>A clearer day, at a glance</h3>
+            <h3>Today’s Summary</h3>
             <span>
               <span /> Sample
             </span>
@@ -301,9 +310,8 @@ export default function Home() {
         aria-labelledby="voices-heading"
       >
         <div className="section-heading">
-          <span className="section-kicker">EVERY MEMBER MATTERS</span>
-          <h2 id="voices-heading">A shared purpose. Different perspectives.</h2>
-          <p>The everyday needs shaping SmartChama.</p>
+          <span className="section-kicker">DESIGNED AROUND YOUR CHAMA</span>
+          <h2 id="voices-heading">Every Member Has a Voice</h2>
         </div>
         <div className="voices-grid">
           {[
@@ -381,7 +389,7 @@ export default function Home() {
             {
               question: "Are the balances on this page real?",
               answer:
-                "No. The dashboard is an interactive demonstration with sample Kenyan shilling amounts. It cycles through four snapshots every 30 seconds by default. You can switch to one-minute updates or pause it using the controls below the preview.",
+                "No. The dashboard is an interactive demonstration with sample Kenyan shilling amounts. It cycles through four snapshots automatically every 30 seconds.",
             },
             {
               question: "How does access to my chama work?",
@@ -411,20 +419,44 @@ export default function Home() {
       </section>
 
       <section className="landing-final-cta">
-        <div className="final-cta-leaf leaf-left" aria-hidden="true" />
-        <div className="final-cta-leaf leaf-right" aria-hidden="true" />
+        <Image
+          src="/images/chama-community.png"
+          alt="A savings group sharing ideas around a laptop outdoors"
+          fill
+          sizes="100vw"
+          className="final-cta-photo"
+        />
+        <svg
+          className="final-cta-wave"
+          viewBox="0 0 1440 76"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M0 26 C220 -32 380 75 620 46 S1040 90 1210 27 S1370 3 1440 10 L1440 0 L0 0Z"
+            fill="white"
+          />
+          <path
+            d="M0 26 C110 -5 220 1 326 24"
+            fill="none"
+            stroke="#c8e1c7"
+            strokeWidth="13"
+          />
+        </svg>
         <div className="landing-container">
-          <span className="cta-emblem">
-            <HeartHandshake size={25} />
-          </span>
-          <h2>Your next chapter starts together.</h2>
-          <p>Give your chama a clearer view of what you can build.</p>
-          <Link href={signUp} className="landing-button button-green">
-            Create your chama <ArrowRight size={16} />
-          </Link>
-          <span className="cta-small">
-            <Check size={13} /> Start with an account. Grow with your group.
-          </span>
+          <div className="final-cta-copy">
+            <h2>Ready to Transform Your Chama Management?</h2>
+            <p>
+              Bring your people together. Build your next chapter with
+              SmartChama.
+            </p>
+            <Link href={signUp} className="landing-button button-white">
+              Create Your Chama <ArrowRight size={18} />
+            </Link>
+            <span className="cta-small">
+              <Check size={13} /> Start with an account. Grow with your group.
+            </span>
+          </div>
         </div>
       </section>
       <footer className="landing-footer landing-container">

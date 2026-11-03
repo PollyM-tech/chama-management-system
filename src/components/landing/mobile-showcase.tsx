@@ -11,6 +11,7 @@ import {
   Wallet,
   Wifi,
 } from "lucide-react";
+import Image from "next/image";
 
 function Phone({ screen, label }: { screen: number; label: string }) {
   return (
@@ -211,17 +212,18 @@ function Phone({ screen, label }: { screen: number; label: string }) {
 export function MobileShowcase() {
   return (
     <section id="mobile" className="mobile-showcase landing-wide">
+      <div className="mobile-lifestyle-photo">
+        <Image
+          src="/images/chama-mobile.png"
+          alt="A member checking her phone in a garden"
+          fill
+          sizes="(max-width: 650px) 100vw, 35vw"
+        />
+      </div>
       <div className="showcase-grid" aria-hidden="true" />
       <div className="section-heading">
-        <span className="section-kicker">YOUR CHAMA, WHEREVER YOU ARE</span>
-        <h2>
-          A big step forward.
-          <br className="mobile-only" /> A familiar mobile experience.
-        </h2>
-        <p>
-          A preview of the contributions, savings, and member tools we’re
-          building.
-        </p>
+        <span className="section-kicker">POWERFUL FEATURES</span>
+        <h2>Mobile Experience</h2>
       </div>
       <div className="phone-lineup">
         {[

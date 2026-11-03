@@ -28,6 +28,8 @@ npx @convex-dev/auth
 
 This configures `JWT_PRIVATE_KEY` and `JWKS` in your selected Convex deployment. Do not commit or share private keys.
 
+For manual key generation, `npm run auth:keys` writes an ignored `.env.auth-keys` file with the correct dotenv quoting. Upload it with `npx convex env set --from-file .env.auth-keys --force`, then delete the file. Regenerate keys only when intentionally rotating them. `JWKS` must be valid JSON; do not escape its JSON quotes when entering it in the Convex dashboard.
+
 Set the required website URL explicitly in that same Convex deployment:
 
 ```sh
@@ -56,9 +58,9 @@ Visit `/sign-in`. Create an account with a 12–128 character password, then ent
 
 ## Public landing page
 
-The public homepage is `/`. It follows the SmartChama design reference with a green hero, interactive sample dashboard, setup steps, mobile product previews, member perspectives, and FAQs. Its sample figures never read or write real chama data. The demo cycles through four snapshots every 30 seconds; visitors can select one-minute updates or pause and resume it. The timers are cleaned up on navigation.
+The public homepage is `/`. It follows the SmartChama design reference with a green hero, interactive sample dashboard, setup steps, mobile product previews, member perspectives, and FAQs. Its sample figures never read or write real chama data. The demo cycles through four snapshots automatically every 30 seconds without visible refresh controls. The timers are cleaned up on navigation.
 
-“Log in” opens `/sign-in`. “Create your chama” opens `/sign-in?flow=signUp`, which starts with the registration form. The real authenticated workspace remains at `/dashboard`.
+“Log in” opens `/sign-in`. “Create your chama” opens `/sign-in?flow=signUp`, which starts with the registration form. After authentication, `/dashboard` opens the last selected active membership, opens a sole membership directly, or shows the group picker when a choice is needed. Group cards open `/dashboard/<chamaId>`, a live dashboard backed by authorized Convex records. “Switch savings group” opens `/dashboard?choose=1` to bypass automatic selection. The browser remembers a group ID only as a navigation preference; the backend still checks every membership. New groups open their dashboard immediately after creation.
 
 ## Backend access rules
 

@@ -9,8 +9,6 @@ import {
   CircleHelp,
   FileChartColumn,
   LayoutDashboard,
-  Pause,
-  Play,
   Settings,
   ShieldCheck,
   Users,
@@ -79,19 +77,16 @@ const currency = (value: number) =>
 
 export function DemoDashboard() {
   const [frame, setFrame] = useState(0);
-  const [intervalMs, setIntervalMs] = useState(DEMO_REFRESH_MS);
-  const [paused, setPaused] = useState(false);
   const [view, setView] = useState("Dashboard");
   const data = snapshots[frame];
 
   useEffect(() => {
-    if (paused) return;
     const timer = window.setInterval(
       () => setFrame((current) => (current + 1) % snapshots.length),
-      intervalMs,
+      DEMO_REFRESH_MS,
     );
     return () => window.clearInterval(timer);
-  }, [intervalMs, paused]);
+  }, []);
 
   return (
     <div className="demo-stage">
@@ -269,32 +264,6 @@ export function DemoDashboard() {
             <Bell size={10} />
           </div>
         </div>
-      </div>
-      <div className="demo-controls">
-        <span className="demo-live-dot" aria-hidden="true" />
-        <span>Interactive demo</span>
-        <label>
-          <span className="sr-only">Demo refresh interval</span>
-          <select
-            value={intervalMs}
-            onChange={(event) => setIntervalMs(Number(event.target.value))}
-          >
-            <option value={30000}>Updates every 30 sec</option>
-            <option value={60000}>Updates every 1 min</option>
-          </select>
-        </label>
-        <button
-          type="button"
-          onClick={() => setPaused((current) => !current)}
-          aria-label={paused ? "Resume demo updates" : "Pause demo updates"}
-        >
-          {paused ? <Play size={13} /> : <Pause size={13} />}
-        </button>
-        <span role="status" className="sr-only">
-          {paused
-            ? "Demo updates paused"
-            : `Demo snapshot ${frame + 1} of ${snapshots.length}`}
-        </span>
       </div>
     </div>
   );

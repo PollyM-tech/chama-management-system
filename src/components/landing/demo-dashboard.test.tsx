@@ -28,28 +28,10 @@ describe("landing-page demo", () => {
     expect(screen.getByText("30 contributions received")).toBeTruthy();
   });
 
-  test("switching to a one-minute interval clears the previous timer", () => {
-    render(<DemoDashboard />);
-    act(() => vi.advanceTimersByTime(15_000));
-    fireEvent.change(
-      screen.getByRole("combobox", { name: "Demo refresh interval" }),
-      { target: { value: "60000" } },
-    );
-    act(() => vi.advanceTimersByTime(59_999));
-    expect(screen.getByText("KES 428,500")).toBeTruthy();
-    act(() => vi.advanceTimersByTime(1));
-    expect(screen.getByText("KES 439,000")).toBeTruthy();
-  });
-
-  test("pauses, resumes, cycles back to the initial sample and cleans up on unmount", () => {
+  test("cycles automatically and cleans up its timer on unmount", () => {
     const { unmount } = render(<DemoDashboard />);
-    fireEvent.click(screen.getByRole("button", { name: "Pause demo updates" }));
-    act(() => vi.advanceTimersByTime(120_000));
-    expect(screen.getByText("KES 428,500")).toBeTruthy();
-    expect(screen.getByRole("status").textContent).toBe("Demo updates paused");
-    fireEvent.click(
-      screen.getByRole("button", { name: "Resume demo updates" }),
-    );
+    expect(screen.queryByText("Interactive demo")).toBeNull();
+    expect(screen.queryByRole("combobox")).toBeNull();
     act(() => vi.advanceTimersByTime(30_000));
     expect(screen.getByText("KES 439,000")).toBeTruthy();
     act(() => vi.advanceTimersByTime(90_000));

@@ -2,7 +2,7 @@
 
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useConvexAuth, useQuery } from "convex/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { api } from "../../../convex/_generated/api";
 import { BrandLogo } from "@/components/brand-logo";
@@ -31,7 +31,6 @@ function SignInForm() {
     api.auth.isAuthenticated,
     isAuthenticated ? {} : "skip",
   );
-  const router = useRouter();
   const [step, setStep] = useState<Step>(
     searchParams.get("flow") === "signUp" ? "signUp" : "signIn",
   );
@@ -40,8 +39,10 @@ function SignInForm() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (sessionValid) router.replace("/dashboard");
-  }, [sessionValid, router]);
+    // Load the authenticated server layout with fresh cookies after login,
+    // verification, or recovery, instead of reusing prefetched route state.
+    if (sessionValid) window.location.replace("/dashboard");
+  }, [sessionValid]);
 
   function changeStep(next: Step) {
     setError("");
@@ -60,7 +61,7 @@ function SignInForm() {
       if (step === "reset") setStep("reset-verification");
       else if ((step === "signIn" || step === "signUp") && !result.signingIn)
         setStep("email-verification");
-    } catch {
+    } catch (cause) {
       if (step === "reset") {
         // Do not reveal whether this address has an account.
         setStep("reset-verification");
@@ -69,7 +70,10 @@ function SignInForm() {
           step === "signIn"
             ? "Unable to sign in. Check your email and password and try again."
             : step === "signUp"
-              ? "Unable to create your account. Check your details, or try signing in."
+              ? cause instanceof Error &&
+                /\baccount\b[^\n]*\balready exists\b/i.test(cause.message)
+                ? "An account with this email already exists. Sign in, or use Forgot password to recover your account."
+                : "Unable to create your account. Check your details, or try signing in."
               : "Unable to verify the code. It may have expired. Try again or start over.",
         );
       }

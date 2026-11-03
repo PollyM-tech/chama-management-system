@@ -28,6 +28,53 @@ export const get = query({
     (await requireMembership(ctx, chamaId)).chama,
 });
 
+export const dashboard = query({
+  args: { chamaId: v.string() },
+  handler: async (ctx, { chamaId: rawId }) => {
+    const chamaId = ctx.db.normalizeId("chamas", rawId);
+    if (!chamaId) throw new ConvexError("FORBIDDEN");
+    const { chama, member } = await requireMembership(ctx, chamaId);
+    const [members, contributions, loans, transactions] = await Promise.all([
+      ctx.db
+        .query("members")
+        .withIndex("by_chama", (q) => q.eq("chamaId", chamaId))
+        .collect(),
+      ctx.db
+        .query("contributions")
+        .withIndex("by_chama", (q) => q.eq("chamaId", chamaId))
+        .collect(),
+      ctx.db
+        .query("loans")
+        .withIndex("by_chama", (q) => q.eq("chamaId", chamaId))
+        .collect(),
+      ctx.db
+        .query("transactions")
+        .withIndex("by_chama_date", (q) => q.eq("chamaId", chamaId))
+        .order("desc")
+        .take(6),
+    ]);
+    return {
+      chama,
+      role: member.role,
+      memberName: member.name,
+      memberCount: members.filter((m) => m.isActive).length,
+      contributionsTotal: contributions
+        .filter((c) => c.status === "paid")
+        .reduce((sum, c) => sum + c.amount, 0),
+      activeLoans: loans.filter((l) =>
+        ["disbursed", "active", "defaulted"].includes(l.status),
+      ).length,
+      recentActivity: transactions.map((t) => ({
+        _id: t._id,
+        description: t.description,
+        amount: t.amount,
+        direction: t.direction,
+        createdAt: t.createdAt,
+      })),
+    };
+  },
+});
+
 export const create = mutation({
   args: {
     name: v.string(),
