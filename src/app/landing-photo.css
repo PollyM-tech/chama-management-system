@@ -15,30 +15,23 @@
 }
 .hero-photograph {
   position: absolute;
-  inset: 0 auto 0 0;
-  width: 77%;
+  inset: auto auto 0 0;
+  width: 65%;
+  height: clamp(260px, 28vw, 420px);
   overflow: hidden;
   z-index: -2;
 }
 .hero-photograph img {
   object-fit: cover;
   object-position: 42% 83%;
-  transform: translateY(105px);
 }
 .hero-photograph::after {
   content: "";
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(
-      180deg,
-      #fff 2%,
-      #ffffffef 21%,
-      #ffffffbb 42%,
-      #ffffff24 67%,
-      transparent 88%
-    ),
-    linear-gradient(90deg, #ffffff24 45%, #f0f6ed 100%);
+    linear-gradient(180deg, #fff 0%, #ffffffa6 8%, transparent 35%),
+    linear-gradient(90deg, transparent 75%, #f0f6ed 100%);
 }
 .landing-page-photo .hero-green-shape {
   z-index: -1;
@@ -444,7 +437,7 @@
 }
 .mobile-lifestyle-photo img {
   object-fit: cover;
-  object-position: 45% 40%;
+  object-position: 15% 40%;
 }
 .landing-page-photo .mobile-showcase .section-heading {
   margin-left: 26%;
@@ -1081,12 +1074,12 @@
   }
   .hero-photograph {
     width: 100%;
-    height: 650px;
+    height: 260px;
+    top: 270px;
     bottom: auto;
   }
   .hero-photograph img {
     object-position: 42% 75%;
-    transform: translateY(65px);
   }
   .hero-photograph::after {
     background: linear-gradient(
@@ -1444,4 +1437,13 @@
   .landing-page-photo .feature-ribbon small {
     font-size: 9px;
   }
+}
+
+.landing-photo-avatar {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  flex-shrink: 0;
+  vertical-align: middle;
+  border-radius: 50%;
 }

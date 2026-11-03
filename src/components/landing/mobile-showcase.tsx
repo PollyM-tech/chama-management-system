@@ -12,6 +12,8 @@ import {
   Wifi,
 } from "lucide-react";
 import Image from "next/image";
+import { LANDING_IMAGES } from "@/lib/landing-images";
+import { PhotoAvatar } from "./photo-avatar";
 
 function Phone({ screen, label }: { screen: number; label: string }) {
   return (
@@ -121,12 +123,7 @@ function Phone({ screen, label }: { screen: number; label: string }) {
             "David Otieno",
           ].map((name, i) => (
             <div className="phone-list-item" key={name}>
-              <span className={`demo-mini-avatar avatar-${i % 3}`}>
-                {name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
-              </span>
+              <PhotoAvatar person={i} className="demo-mini-avatar" />
               <span>
                 {name}
                 <small>Monthly contribution</small>
@@ -214,7 +211,7 @@ export function MobileShowcase() {
     <section id="mobile" className="mobile-showcase landing-wide">
       <div className="mobile-lifestyle-photo">
         <Image
-          src="/images/chama-mobile.png"
+          src={LANDING_IMAGES.mobile}
           alt="A member checking her phone in a garden"
           fill
           sizes="(max-width: 650px) 100vw, 35vw"

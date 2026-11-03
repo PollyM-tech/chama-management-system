@@ -1,10 +1,24 @@
 # SmartChama landing photography
 
+## Current page images
+
+The landing page now uses the photos supplied in this folder:
+
+| File | Placement |
+| --- | --- |
+| `Collaborative Outdoor SmartChama Meeting (1).png` | Hero and sample portrait thumbnails |
+| `personsmilingusingphone.png` | Mobile experience banner |
+| `Kenyan Friends Around SmartChama Laptop.png` | Closing call to action |
+
+Paths are centralized in `src/lib/landing-images.ts`. Replace the files or edit that mapping to change the photos. Portrait thumbnails frame the meeting image with CSS; the original photos are kept intact. The sample dashboard and member perspectives remain illustrative.
+
+## Previous generated imagery
+
 These illustrative editorial photographs were generated with the built-in image-generation tool for the supplied landing-page reference. They do not depict actual SmartChama customers.
 
 ## chama-community.png
 
-Used in the hero and closing call to action.
+Retained from the previous design; the current page uses the supplied meeting photos instead.
 
 Final prompt:
 
@@ -12,7 +26,7 @@ Final prompt:
 
 ## chama-mobile.png
 
-Used beside the mobile product previews.
+Previously used beside the mobile product previews; replaced by `personsmilingusingphone.png`.
 
 Final prompt:
 

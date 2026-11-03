@@ -20,6 +20,8 @@ import {
 import { BrandLogo } from "@/components/brand-logo";
 import { DemoDashboard } from "@/components/landing/demo-dashboard";
 import { MobileShowcase } from "@/components/landing/mobile-showcase";
+import { PhotoAvatar } from "@/components/landing/photo-avatar";
+import { LANDING_IMAGES } from "@/lib/landing-images";
 import "./landing.css";
 import "./landing-photo.css";
 
@@ -47,7 +49,7 @@ export default function Home() {
       <div className="landing-top">
         <div className="hero-photograph" aria-hidden="true">
           <Image
-            src="/images/chama-community.png"
+            src={LANDING_IMAGES.hero}
             alt=""
             fill
             sizes="(max-width: 650px) 100vw, 70vw"
@@ -339,14 +341,12 @@ export default function Home() {
               need: "A place in the bigger picture",
               className: "voice-member",
             },
-          ].map((voice) => (
+          ].map((voice, index) => (
             <article className="voice-card" key={voice.role}>
               <MessageCircle size={24} fill="currentColor" strokeWidth={0} />
               <p>{voice.quote}</p>
               <div>
-                <span className={`voice-avatar ${voice.className}`}>
-                  {voice.initials}
-                </span>
+                <PhotoAvatar person={index} className="voice-avatar" />
                 <span>
                   <strong>{voice.role}</strong>
                   <small>{voice.need}</small>
@@ -420,7 +420,7 @@ export default function Home() {
 
       <section className="landing-final-cta">
         <Image
-          src="/images/chama-community.png"
+          src={LANDING_IMAGES.community}
           alt="A savings group sharing ideas around a laptop outdoors"
           fill
           sizes="100vw"

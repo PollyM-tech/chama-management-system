@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PhotoAvatar } from "./photo-avatar";
 import {
   Activity,
   ArrowUpRight,
@@ -121,7 +122,7 @@ export function DemoDashboard() {
             <CircleHelp size={12} /> Help & support
           </div>
           <div className="demo-profile">
-            <span className="demo-avatar">AM</span>
+            <PhotoAvatar person={3} className="demo-avatar" />
             <span>
               Amani M.<small>Demo chairperson</small>
             </span>
@@ -192,12 +193,7 @@ export function DemoDashboard() {
                 {["Mary Wanjiku", "James Kariuki", "Amina Hassan"].map(
                   (name, i) => (
                     <div className="demo-payment" key={name}>
-                      <span className={`demo-mini-avatar avatar-${i}`}>
-                        {name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </span>
+                      <PhotoAvatar person={i} className="demo-mini-avatar" />
                       <span>
                         {name}
                         <small>{i + 2} minutes ago</small>
