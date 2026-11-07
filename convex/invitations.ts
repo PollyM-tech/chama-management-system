@@ -3,17 +3,22 @@ import { v, ConvexError } from "convex/values";
 import { z } from "zod";
 import { internal } from "./_generated/api";
 import { requireMembership, requireUser } from "./lib/auth";
+import { normalizePhone } from "../shared/invitations";
 import { OFFICERS } from "../shared/workspace";
+
+const invitationRole = v.union(v.literal("member"), v.literal("chairperson"), v.literal("secretary"), v.literal("treasurer"));
 
 export const store = internalMutation({
   args: {
     chamaId: v.id("chamas"),
     token: v.string(),
     email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    role: v.optional(invitationRole),
     channel: v.union(v.literal("email"), v.literal("whatsapp")),
   },
   handler: async (ctx, args) => {
-    const { user, chama } = await requireMembership(
+    const { user, member, chama } = await requireMembership(
       ctx,
       args.chamaId,
       OFFICERS,
@@ -22,9 +27,19 @@ export const store = internalMutation({
     if (args.channel === "email" && !email)
       throw new ConvexError("EMAIL_REQUIRED");
     if (email) z.email().parse(email);
+    const role = args.role ?? "member";
+    if (role !== "member" && !["admin", "chairperson"].includes(member.role))
+      throw new ConvexError("ONLY_CHAIRPERSON_CAN_ASSIGN_OFFICER_ROLES");
+    let phone: string | undefined;
+    if (args.channel === "whatsapp") {
+      try { phone = normalizePhone(args.phone ?? ""); }
+      catch { throw new ConvexError("INVALID_PHONE_NUMBER"); }
+    }
     await ctx.db.insert("invitations", {
       ...args,
-      email: email || undefined,
+      email: args.channel === "email" ? email : undefined,
+      phone,
+      role,
       createdBy: user._id,
       createdAt: Date.now(),
       expiresAt: Date.now() + 7 * 86400000,
@@ -37,7 +52,7 @@ export const store = internalMutation({
       action: `Created ${args.channel} invitation`,
       createdAt: Date.now(),
     });
-    return { chamaName: chama.name };
+    return { chamaName: chama.name, phone };
   },
 });
 
@@ -45,6 +60,8 @@ export const create = action({
   args: {
     chamaId: v.id("chamas"),
     email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    role: v.optional(invitationRole),
     channel: v.union(v.literal("email"), v.literal("whatsapp")),
   },
   handler: async (
@@ -54,13 +71,14 @@ export const create = action({
     url: string;
     emailSent: boolean;
     emailError: string | null;
+    phone: string | null;
   }> => {
     const site = process.env.SITE_URL;
     if (!site) throw new ConvexError("SITE_URL_NOT_CONFIGURED");
     const token = Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) =>
       b.toString(16).padStart(2, "0"),
     ).join("");
-    const { chamaName } = await ctx.runMutation(internal.invitations.store, {
+    const { chamaName, phone } = await ctx.runMutation(internal.invitations.store, {
       ...args,
       token,
     });
@@ -93,6 +111,7 @@ export const create = action({
     return {
       url,
       emailSent,
+      phone: phone ?? null,
       emailError:
         args.channel === "email" && !emailSent
           ? "Invitation created, but the email could not be delivered. Copy the link to share it, and check your Resend sender configuration."
@@ -112,7 +131,9 @@ export const preview = query({
     if (
       !invitation ||
       invitation.status !== "pending" ||
-      invitation.expiresAt < Date.now()
+      invitation.expiresAt <= Date.now() ||
+      (invitation.channel === "email" && !invitation.email) ||
+      (invitation.channel === "whatsapp" && !invitation.phone)
     )
       return null;
     const chama = await ctx.db.get(invitation.chamaId);
@@ -120,27 +141,38 @@ export const preview = query({
     return {
       name: chama.name,
       expiresAt: invitation.expiresAt,
-      emailRestricted: !!invitation.email,
+      emailRestricted: invitation.channel === "email" && !!invitation.email,
+      channel: invitation.channel,
+      role: invitation.role ?? "member",
+      phoneHint: invitation.phone ? `••••${invitation.phone.slice(-4)}` : null,
     };
   },
 });
 
 export const accept = mutation({
-  args: { token: v.string() },
-  handler: async (ctx, { token }) => {
+  args: { token: v.string(), name: v.string(), phone: v.string() },
+  handler: async (ctx, { token, name: rawName, phone: rawPhone }) => {
     const user = await requireUser(ctx);
     const invite = await ctx.db
       .query("invitations")
       .withIndex("by_token", (q) => q.eq("token", token))
       .unique();
-    if (!invite || invite.status === "revoked" || invite.expiresAt < Date.now())
+    if (!invite || invite.status === "revoked" || invite.expiresAt <= Date.now())
       throw new ConvexError("INVITATION_INVALID_OR_EXPIRED");
-    if (invite.status === "accepted") {
-      if (invite.acceptedBy === user._id) return invite.chamaId;
+    if (invite.status === "accepted")
       throw new ConvexError("INVITATION_ALREADY_USED");
-    }
-    if (invite.email && invite.email !== user.email?.toLowerCase())
+    // Never allow older unrestricted links to become a way around new rules.
+    if ((invite.channel === "email" && !invite.email) ||
+        (invite.channel === "whatsapp" && !invite.phone))
+      throw new ConvexError("INVITATION_NEEDS_REISSUE");
+    if (invite.channel === "email" && invite.email !== user.email?.trim().toLowerCase())
       throw new ConvexError("SIGN_IN_WITH_THE_INVITED_EMAIL");
+    const name = z.string().trim().min(2).max(100).parse(rawName);
+    let phone: string;
+    try { phone = normalizePhone(rawPhone); }
+    catch { throw new ConvexError("INVALID_PHONE_NUMBER"); }
+    if (invite.channel === "whatsapp" && phone !== invite.phone)
+      throw new ConvexError("USE_THE_INVITED_PHONE_NUMBER");
     const chama = await ctx.db.get(invite.chamaId);
     if (!chama?.isActive) throw new ConvexError("GROUP_INACTIVE");
     const membership = await ctx.db
@@ -151,26 +183,35 @@ export const accept = mutation({
       .unique();
     if (membership && !membership.isActive)
       throw new ConvexError("CONTACT_AN_ADMIN_TO_REACTIVATE_MEMBERSHIP");
-    if (!membership)
-      await ctx.db.insert("members", {
+    if (membership) throw new ConvexError("MEMBERSHIP_ALREADY_EXISTS");
+    // Recheck the inviter's authority at acceptance as well as creation.
+    const inviter = await ctx.db.query("members")
+      .withIndex("by_chama_user", q => q.eq("chamaId", invite.chamaId).eq("userId", invite.createdBy))
+      .unique();
+    const role = invite.role ?? "member";
+    if (!inviter?.isActive || !OFFICERS.some(r => r === inviter.role) ||
+        (role !== "member" && !["admin", "chairperson"].includes(inviter.role)))
+      throw new ConvexError("INVITATION_NEEDS_REISSUE");
+    await ctx.db.insert("members", {
         chamaId: invite.chamaId,
         userId: user._id,
-        name: user.name ?? "Member",
+        name,
         email: user.email!,
-        phone: "",
-        role: "member",
+        phone,
+        role,
         joinedAt: Date.now(),
         isActive: true,
       });
     await ctx.db.patch(invite._id, {
       status: "accepted",
       acceptedBy: user._id,
+      acceptedAt: Date.now(),
     });
     await ctx.db.insert("auditEvents", {
       chamaId: invite.chamaId,
       actorId: user._id,
       actorName: user.name ?? "Member",
-      action: "Accepted group invitation",
+      action: `Accepted group invitation as ${role}`,
       createdAt: Date.now(),
     });
     return invite.chamaId;

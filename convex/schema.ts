@@ -4,6 +4,15 @@ import { authTables } from "@convex-dev/auth/server";
 
 export default defineSchema({
   ...authTables,
+  adminAccessGrants: defineTable({
+    email: v.string(),
+    chamaIds: v.array(v.id("chamas")),
+    status: v.union(v.literal("pending"), v.literal("activated"), v.literal("revoked")),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+    activatedBy: v.optional(v.id("users")),
+    activatedAt: v.optional(v.number()),
+  }).index("by_email_status", ["email", "status"]),
   chamas: defineTable({
     name: v.string(),
     description: v.optional(v.string()),
@@ -211,6 +220,9 @@ export default defineSchema({
     chamaId: v.id("chamas"),
     token: v.string(),
     email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    role: v.optional(v.union(v.literal("member"), v.literal("chairperson"), v.literal("secretary"), v.literal("treasurer"))),
+    acceptedAt: v.optional(v.number()),
     createdBy: v.id("users"),
     createdAt: v.number(),
     expiresAt: v.number(),

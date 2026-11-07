@@ -78,7 +78,7 @@ Roles belong to a membership in a particular chama, not globally to the user:
 | Change roles, deactivate/reactivate members | Admin/chairperson in that group |
 | Record payments, expenses, repayments, and reconciliation | Admin/chairperson or treasurer in that group |
 
-Members join through an email or WhatsApp invitation created in the Members section. Links expire in seven days, can be revoked, and grant only the member role after email verification. Memberships cannot be duplicated. `members.updateAccess` prevents removing or demoting the last active admin/chairperson. Role changes and deactivation take effect on the next backend request. Registration alone grants no access to existing groups.
+Members join through an email or WhatsApp invitation created in the Members section. Links expire in seven days, can be revoked, and are consumed once when the recipient submits their details. Email invites require the matching verified account. Admin/chairperson can preassign officer roles; treasurers and secretaries invite ordinary members. WhatsApp invites require a recipient number but, without OTP, do not prove phone ownership; keep links private. Memberships cannot be duplicated. `members.updateAccess` prevents removing or demoting the last active admin/chairperson. Role changes and deactivation take effect on the next backend request. Registration alone grants no access to existing groups.
 
 The Next.js proxy protects application routes, and the workspace layout also calls the backend. These redirects improve navigation; backend guards enforce authorization even for direct API calls. Financial and membership mutations check every referenced record's group. See `docs/implementation.md` for the complete permission matrix and accounting behavior.
 

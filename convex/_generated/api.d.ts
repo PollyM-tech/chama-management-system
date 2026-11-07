@@ -8,10 +8,12 @@
  * @module
  */
 
+import type * as adminAccess from "../adminAccess.js";
 import type * as auth from "../auth.js";
 import type * as chamas from "../chamas.js";
 import type * as http from "../http.js";
 import type * as invitations from "../invitations.js";
+import type * as lib_admin_access from "../lib/admin_access.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_email from "../lib/email.js";
 import type * as lib_ledger from "../lib/ledger.js";
@@ -26,10 +28,12 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  adminAccess: typeof adminAccess;
   auth: typeof auth;
   chamas: typeof chamas;
   http: typeof http;
   invitations: typeof invitations;
+  "lib/admin_access": typeof lib_admin_access;
   "lib/auth": typeof lib_auth;
   "lib/email": typeof lib_email;
   "lib/ledger": typeof lib_ledger;

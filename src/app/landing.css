@@ -1515,28 +1515,6 @@
   background: #dbeccd;
   transform: rotate(-16deg);
 }
-.landing-footer {
-  display: flex;
-  gap: 25px;
-  justify-content: space-between;
-  align-items: center;
-  padding-block: 28px;
-}
-.landing-footer > p {
-  font-size: 10px;
-  color: #7d8b73;
-}
-.landing-footer > div {
-  display: flex;
-  gap: 20px;
-  font-size: 10px;
-  color: #62725a;
-}
-.landing-footer > div a:last-child {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
 .mobile-only {
   display: none;
 }
@@ -2356,23 +2334,7 @@
     right: -400px;
     bottom: -170px;
   }
-  .landing-footer {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px 28px;
-    text-align: center;
-    padding-block: 25px;
-  }
-  .landing-footer > p {
-    font-size: 9px;
-  }
-  .landing-footer > div {
-    width: 100%;
-    justify-content: center;
-    margin-top: 5px;
-    gap: 24px;
-    font-size: 9px;
-  }
+
 }
 @media (max-width: 370px) {
   .hero-assurances {

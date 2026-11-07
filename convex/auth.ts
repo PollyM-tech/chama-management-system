@@ -5,9 +5,16 @@ import { emailCodeProvider } from "./lib/email";
 import { query } from "./_generated/server";
 import { requireUser } from "./lib/auth";
 import { ConvexError } from "convex/values";
+import { activateAdminAccess } from "./lib/admin_access";
+import type { MutationCtx } from "./_generated/server";
 import type { DataModel } from "./_generated/dataModel";
 
 export const { auth, signIn, signOut, store } = convexAuth({
+  callbacks: {
+    async beforeSessionCreation(ctx, { userId }) {
+      await activateAdminAccess(ctx as MutationCtx, userId);
+    },
+  },
   providers: [
     Password<DataModel>({
       profile(params) {

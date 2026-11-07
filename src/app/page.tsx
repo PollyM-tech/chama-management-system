@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   ArrowRight,
+  ArrowUp,
   ArrowUpRight,
   BookOpenCheck,
   ChartNoAxesCombined,
@@ -42,7 +43,7 @@ const links = [
 
 export default function Home() {
   return (
-    <div className="landing-page landing-page-photo">
+    <div id="top" className="landing-page landing-page-photo">
       <a className="landing-skip-link" href="#main-content">
         Skip to content
       </a>
@@ -459,15 +460,45 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <footer className="landing-footer landing-container">
-        <BrandLogo size="navigation" />
-        <p>Manage Together. Grow Together.</p>
-        <div>
-          <a href="#about">About SmartChama</a>
-          <a href="#faqs">Questions?</a>
-          <Link href="/sign-in">
-            Log in <ArrowUpRight size={12} />
-          </Link>
+      <footer className="site-footer" aria-label="SmartChama footer">
+        <div className="landing-container">
+          <div className="site-footer-main">
+            <div className="site-footer-brand">
+              <BrandLogo size="navigation" />
+              <p className="site-footer-tagline">Manage Together. Grow Together.</p>
+              <p>
+                Bring your chama’s members, savings, and financial activities
+                together. Built for Kenyan groups moving forward together.
+              </p>
+              <span className="site-footer-community">
+                <Users size={16} aria-hidden="true" /> Your people. Your progress.
+              </span>
+            </div>
+            <nav aria-label="Explore SmartChama" className="site-footer-links">
+              <h2>Explore</h2>
+              <a href="#features">Features</a>
+              <a href="#how-it-works">How it works</a>
+              <a href="#pricing">Pricing</a>
+            </nav>
+            <nav aria-label="Learn about SmartChama" className="site-footer-links">
+              <h2>Learn more</h2>
+              <a href="#about">About SmartChama</a>
+              <a href="#voices-heading">Member stories</a>
+              <a href="#faqs">Frequently asked questions</a>
+            </nav>
+            <nav aria-label="SmartChama account" className="site-footer-links site-footer-account">
+              <h2>Your chama starts here</h2>
+              <p>A shared view of your group’s next chapter.</p>
+              <Link href={signUp} className="site-footer-create">
+                Create your chama <ArrowRight size={16} aria-hidden="true" />
+              </Link>
+              <Link href="/sign-in">Already a member? Log in</Link>
+            </nav>
+          </div>
+          <div className="site-footer-bottom">
+            <p>© {new Date().getUTCFullYear()} SmartChama. All rights reserved.</p>
+            <a href="#top">Back to top <ArrowUp size={15} aria-hidden="true" /></a>
+          </div>
         </div>
       </footer>
     </div>

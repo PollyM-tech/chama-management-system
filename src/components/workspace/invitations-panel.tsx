@@ -4,10 +4,12 @@ import { useState, type FormEvent } from "react";
 import { Copy, Mail, MessageCircle } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import { useWorkspace } from "./workspace-shell";
+import { INVITATION_ROLES, type InvitationRole } from "../../../shared/invitations";
+import { roleLabel } from "../../../shared/workspace";
 import { Badge, day, humanError, Table } from "./widgets";
 
 export function InvitationsPanel() {
-  const { chama, invitations, officer } = useWorkspace();
+  const { chama, invitations, officer, member } = useWorkspace();
   const create = useAction(api.invitations.create);
   const revoke = useMutation(api.invitations.revoke);
   const [busy, setBusy] = useState(false);
@@ -16,6 +18,7 @@ export function InvitationsPanel() {
     url: string;
     emailSent: boolean;
     emailError: string | null;
+    phone: string | null;
   } | null>(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
@@ -31,8 +34,13 @@ export function InvitationsPanel() {
     try {
       const response = await create({
         chamaId: chama._id,
-        email: String(values.get("email") ?? "").trim() || undefined,
+        email:
+          channel === "email"
+            ? String(values.get("email") ?? "").trim() || undefined
+            : undefined,
         channel,
+        phone: channel === "whatsapp" ? String(values.get("phone") ?? "").trim() : undefined,
+        role: String(values.get("role") ?? "member") as InvitationRole,
       });
       setResult(response);
       form.reset();
@@ -48,32 +56,52 @@ export function InvitationsPanel() {
         <h2 className="workspace-section-heading">Invite a member</h2>
         <p className="workspace-page-description">
           Chairpersons, treasurers, and secretaries can invite members. Links
-          expire after seven days and can be accepted once. Invitees join with
-          the member role.
+          expire after seven days and can be accepted once. Choose the recipient
+          and their role before sharing. Email invitations require the matching
+          verified account. Keep WhatsApp links private: whoever has the link
+          could use it first.
         </p>
         <form onSubmit={submit} className="workspace-form">
           <label className="workspace-field">
             Delivery method
             <select
               value={channel}
-              onChange={(e) =>
-                setChannel(e.target.value as "email" | "whatsapp")
-              }
+              disabled={busy}
+              onChange={(e) => {
+                setChannel(e.target.value as "email" | "whatsapp");
+                setError("");
+                setResult(null);
+                setCopied(false);
+              }}
             >
               <option value="email">Email invitation</option>
               <option value="whatsapp">Share on WhatsApp</option>
             </select>
           </label>
+          {channel === "email" ? (
+            <label className="workspace-field">
+              Recipient email
+              <input
+                name="email"
+                type="email"
+                required
+                placeholder="member@example.com"
+              />
+            </label>
+          ) : (
+            <label className="workspace-field">
+              Recipient WhatsApp number
+              <input name="phone" type="tel" autoComplete="tel" required
+                placeholder="0712 345 678 or +254712345678" />
+            </label>
+          )}
           <label className="workspace-field">
-            {channel === "email"
-              ? "Recipient email"
-              : "Restrict to an email (optional)"}
-            <input
-              name="email"
-              type="email"
-              required={channel === "email"}
-              placeholder="member@example.com"
-            />
+            Assigned role
+            <select name="role" defaultValue="member">
+              {(["admin", "chairperson"].includes(member.role) ? INVITATION_ROLES : ["member"]).map(role => (
+                <option key={role} value={role}>{roleLabel(role)}</option>
+              ))}
+            </select>
           </label>
           <div className="workspace-form-footer">
             <button disabled={busy} className="workspace-button">
@@ -128,7 +156,7 @@ export function InvitationsPanel() {
                 className="workspace-button"
                 target="_blank"
                 rel="noopener noreferrer"
-                href={`https://wa.me/?text=${encodeURIComponent(`Join ${chama.name} on SmartChama: ${result.url}`)}`}
+                href={`https://wa.me/${result.phone?.replace(/\D/g, "") ?? ""}?text=${encodeURIComponent(`Join ${chama.name} on SmartChama: ${result.url}`)}`}
               >
                 <MessageCircle size={14} />
                 Share on WhatsApp
@@ -140,10 +168,11 @@ export function InvitationsPanel() {
       <section className="workspace-card">
         <h2 className="workspace-section-heading">Invitation history</h2>
         <Table
-          headings={["Recipient", "Channel", "Status", "Expires", "Action"]}
+          headings={["Recipient", "Channel", "Role", "Status", "Expires", "Action"]}
           rows={invitations.map((invite) => [
-            invite.email ?? "Shareable member link",
+            invite.email ?? invite.phone ?? "Reissue required",
             invite.channel,
+            roleLabel(invite.role),
             <Badge
               key="status"
               value={

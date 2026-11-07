@@ -230,6 +230,8 @@ export const get = query({
       invitations: invitations.map((invite) => ({
         _id: invite._id,
         email: invite.email,
+        phone: invite.phone,
+        role: invite.role ?? "member",
         channel: invite.channel,
         status: invite.status,
         expiresAt: invite.expiresAt,

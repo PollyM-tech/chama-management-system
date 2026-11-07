@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
-import { afterEach, expect, test, vi } from "vitest";
+import { beforeEach, afterEach, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
 const modules = import.meta.glob(["./**/*.ts", "!./**/*.test.ts"]);
@@ -81,7 +81,11 @@ async function setup() {
     outsider: clients[5],
   };
 }
+beforeEach(() => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("Unavailable", { status: 503 })));
+});
 afterEach(() => {
+  vi.unstubAllGlobals();
   vi.unstubAllEnvs();
   vi.restoreAllMocks();
 });
@@ -348,20 +352,45 @@ test("officers can create email-bound or WhatsApp invitations; ordinary members 
   const one = await secretary.action(api.invitations.create, {
     chamaId: ids.chamaId,
     channel: "whatsapp",
+    phone: "+254712345678",
     email: "candidate@example.com",
   });
   expect(one.url).toMatch(/^https:\/\/smartchama.example\/join\/[a-f0-9]{64}$/);
   const two = await treasurer.action(api.invitations.create, {
     chamaId: ids.chamaId,
     channel: "whatsapp",
+    phone: "+254712345678",
   });
   expect(two.url).not.toBe(one.url);
   await expect(
     member.action(api.invitations.create, {
       chamaId: ids.chamaId,
       channel: "whatsapp",
+    phone: "+254712345678",
     }),
   ).rejects.toThrow("FORBIDDEN");
+});
+
+test("WhatsApp invitations work without email configuration or a recipient email", async () => {
+  vi.stubEnv("SITE_URL", "https://smartchama.example");
+  vi.stubEnv("AUTH_RESEND_KEY", "");
+  vi.stubEnv("AUTH_EMAIL_FROM", "");
+  const delivery = vi.fn();
+  vi.stubGlobal("fetch", delivery);
+  const { ids, secretary, candidate } = await setup();
+  const result = await secretary.action(api.invitations.create, {
+    chamaId: ids.chamaId,
+    channel: "whatsapp",
+    phone: "+254712345678",
+  });
+  expect(result.emailSent).toBe(false);
+  expect(result.emailError).toBeNull();
+  expect(delivery).not.toHaveBeenCalled();
+  const token = result.url.split("/").at(-1)!;
+  expect(await candidate.query(api.invitations.preview, { token })).toMatchObject({
+    emailRestricted: false,
+  });
+  expect(await candidate.mutation(api.invitations.accept, { token, name: "Candidate Member", phone: "0712345678" })).toBe(ids.chamaId);
 });
 
 test("invitation acceptance requires the invited email, grants only member access, and cannot be reused by someone else", async () => {
@@ -369,25 +398,23 @@ test("invitation acceptance requires the invited email, grants only member acces
   const { ids, secretary, candidate, outsider } = await setup();
   const { url } = await secretary.action(api.invitations.create, {
     chamaId: ids.chamaId,
-    channel: "whatsapp",
+    channel: "email",
     email: "candidate@example.com",
   });
   const token = url.split("/").pop()!;
   await expect(
-    outsider.mutation(api.invitations.accept, { token }),
+    outsider.mutation(api.invitations.accept, { token, name: "Candidate Member", phone: "0712345678" }),
   ).rejects.toThrow("SIGN_IN_WITH_THE_INVITED_EMAIL");
-  expect(await candidate.mutation(api.invitations.accept, { token })).toBe(
+  expect(await candidate.mutation(api.invitations.accept, { token, name: "Candidate Member", phone: "0712345678" })).toBe(
     ids.chamaId,
   );
   expect(
     (await candidate.query(api.workspace.get, { chamaId: ids.chamaId })).member
       .role,
   ).toBe("member");
-  expect(await candidate.mutation(api.invitations.accept, { token })).toBe(
-    ids.chamaId,
-  );
+  await expect(candidate.mutation(api.invitations.accept, { token, name: "Candidate Member", phone: "0712345678" })).rejects.toThrow("INVITATION_ALREADY_USED");
   await expect(
-    outsider.mutation(api.invitations.accept, { token }),
+    outsider.mutation(api.invitations.accept, { token, name: "Candidate Member", phone: "0712345678" }),
   ).rejects.toThrow("INVITATION_ALREADY_USED");
 });
 
@@ -398,6 +425,7 @@ test("expired and revoked invitation links cannot create memberships", async () 
     const { url } = await secretary.action(api.invitations.create, {
       chamaId: ids.chamaId,
       channel: "whatsapp",
+    phone: "+254712345678",
     });
     const token = url.split("/").pop()!;
     await t.run(async (ctx) => {
@@ -414,7 +442,7 @@ test("expired and revoked invitation links cannot create memberships", async () 
       await candidate.query(api.invitations.preview, { token }),
     ).toBeNull();
     await expect(
-      candidate.mutation(api.invitations.accept, { token }),
+      candidate.mutation(api.invitations.accept, { token, name: "Candidate Member", phone: "0712345678" }),
     ).rejects.toThrow("INVITATION_INVALID_OR_EXPIRED");
   }
 });
@@ -448,4 +476,50 @@ test("email invitations send a single-use join link and retain a shareable fallb
   expect(fallback.emailSent).toBe(false);
   expect(fallback.emailError).toContain("could not be delivered");
   expect(fallback.url).toContain("/join/");
+});
+
+test("inviter-assigned roles and completed details are enforced by the backend", async () => {
+  vi.stubEnv("SITE_URL", "https://smartchama.example");
+  const { ids, admin, secretary, candidate } = await setup();
+  await expect(secretary.action(api.invitations.create, {
+    chamaId: ids.chamaId, channel: "whatsapp", phone: "0712345678", role: "treasurer",
+  })).rejects.toThrow("ONLY_CHAIRPERSON_CAN_ASSIGN_OFFICER_ROLES");
+  const { url } = await admin.action(api.invitations.create, {
+    chamaId: ids.chamaId, channel: "whatsapp", phone: "0712345678", role: "treasurer",
+  });
+  const token = url.split("/").at(-1)!;
+  expect(await candidate.query(api.invitations.preview, { token })).toMatchObject({ role: "treasurer", phoneHint: "••••5678" });
+  await expect(candidate.mutation(api.invitations.accept, { token, name: "Candidate", phone: "+254711111111" })).rejects.toThrow("USE_THE_INVITED_PHONE_NUMBER");
+  await expect(candidate.mutation(api.invitations.accept, { token, name: " ", phone: "0712345678" })).rejects.toThrow();
+  await candidate.mutation(api.invitations.accept, { token, name: "Candidate Full Name", phone: "0712345678" });
+  const state = await candidate.query(api.workspace.get, { chamaId: ids.chamaId });
+  expect(state.member).toMatchObject({ role: "treasurer", name: "Candidate Full Name", phone: "+254712345678", email: "candidate@example.com" });
+  expect(await candidate.query(api.invitations.preview, { token })).toBeNull();
+});
+
+test("a single-use WhatsApp link cannot add two users even with concurrent acceptance", async () => {
+  vi.stubEnv("SITE_URL", "https://smartchama.example");
+  const { ids, secretary, candidate, outsider } = await setup();
+  const { url } = await secretary.action(api.invitations.create, {
+    chamaId: ids.chamaId, channel: "whatsapp", phone: "0712345678",
+  });
+  const token = url.split("/").at(-1)!;
+  const outcomes = await Promise.allSettled([candidate, outsider].map(client =>
+    client.mutation(api.invitations.accept, { token, name: "Applicant", phone: "0712345678" })
+  ));
+  expect(outcomes.filter(result => result.status === "fulfilled")).toHaveLength(1);
+  expect(outcomes.filter(result => result.status === "rejected")).toHaveLength(1);
+});
+
+test("legacy unrestricted links and invitations from inactive officers cannot grant membership", async () => {
+  vi.stubEnv("SITE_URL", "https://smartchama.example");
+  const { t, ids, secretary, candidate } = await setup();
+  const token = "a".repeat(64);
+  await t.run(async ctx => {
+    await ctx.db.insert("invitations", { chamaId: ids.chamaId, token, channel: "whatsapp", createdBy: ids.users[2], createdAt: Date.now(), expiresAt: Date.now() + 100000, status: "pending" });
+  });
+  await expect(candidate.mutation(api.invitations.accept, { token, name: "Candidate", phone: "0712345678" })).rejects.toThrow("INVITATION_NEEDS_REISSUE");
+  const { url } = await secretary.action(api.invitations.create, { chamaId: ids.chamaId, channel: "whatsapp", phone: "0712345678" });
+  await t.run(ctx => ctx.db.patch(ids.memberIds[2], { isActive: false }));
+  await expect(candidate.mutation(api.invitations.accept, { token: url.split("/").at(-1)!, name: "Candidate", phone: "0712345678" })).rejects.toThrow("INVITATION_NEEDS_REISSUE");
 });

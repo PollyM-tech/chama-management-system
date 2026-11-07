@@ -40,11 +40,13 @@ Ordinary members see only their own contribution/loan/dividend details and membe
 
 ## Invitation flow
 
-1. An officer opens Members, chooses Email or WhatsApp, and optionally restricts a WhatsApp invitation to a specific email address.
+1. An officer opens Members and chooses Email (recipient email required) or WhatsApp (recipient phone required). Admin/chairperson may assign member, chairperson, secretary, or treasurer; treasurers and secretaries can invite ordinary members only.
 2. A cryptographically random 256-bit token produces a single-use `/join/<token>` link. It expires in seven days and can be revoked.
 3. Email delivery uses `AUTH_RESEND_KEY` and `AUTH_EMAIL_FROM` in the Convex deployment. If delivery fails, the officer can copy/share the created link. Clicking Share on WhatsApp opens WhatsApp with the link; it does not automatically send a message.
 4. The recipient signs in or creates/verifies an account and returns to the invitation. The return URL accepts only an internal join-token route.
-5. Acceptance validates status, expiry, recipient email when restricted, verified session, active group, and existing membership. It grants only the member role and cannot reactivate a deactivated membership.
+5. After signing in, the recipient completes their full name and phone. Account email and the inviter-assigned role are read-only. Acceptance validates status, expiry, verified email for email invitations, the entered recipient phone for WhatsApp invitations, verified session, active group, current inviter authority, and existing membership. The role is read from the invitation on the backend, never from form input. It cannot reactivate an inactive membership or change an existing member’s access.
+6. Successful acceptance atomically creates the membership and consumes the invitation; even the same account cannot accept it twice. Invalid form submissions do not consume the link. Old WhatsApp links without a recipient number must be reissued.
+7. Phone ownership is **not verified**. Per the chosen no-OTP approach, WhatsApp links are bearer invitations: someone with both the link and recipient number could use it first. Keep these links private. A phone check is for consistent contact data, not proof of identity; strict phone-only access would require an OTP provider. No SMS service is configured or required.
 
 Set Convex `SITE_URL` to the reachable frontend origin before sharing links to other devices. `http://localhost:3000` works only on the device opening that address. Resend's test sender can deliver only to the Resend account's own address; configure a verified domain for other recipients.
 
@@ -62,3 +64,10 @@ Run `npm run typecheck`, `npm run lint`, `npm test`, and `npm run build`. Apply 
 Payment entry records money already received or paid. This implementation does not initiate M-Pesa STK pushes, bank transfers, investment trades, or actual dividend transfers. Daraja provider credentials, webhook verification, payment reconciliation, and live payment testing remain necessary before enabling automated payments. Never treat a manually entered receipt as provider confirmation.
 
 Notifications are in-app, with email used for authentication and invitations. SMS, native mobile apps, AI insights, credit scoring, and automated dividend distribution remain future enhancements as listed in the guide. Backup policies must be configured in the Convex deployment/hosting account; no backup schedule is claimed to be provisioned by this code.
+
+
+## Deployment operator administrator setup
+
+`adminAccess.prepare` is an internal mutation available only to deployment operators. It prepares a seven-day, email-bound grant for an explicit list of active group IDs. A verified existing account activates immediately; otherwise the grant is consumed in Convex Auth’s `beforeSessionCreation` callback only after email verification. Activation creates/promotes active memberships to admin and records audit events. It never grants access to future groups automatically, restores an inactive membership, or reapplies a consumed grant after a later demotion.
+
+`adminAccess.createDeveloperAccount` additionally creates a password account using Convex Auth’s password hashing and returns a server-generated password once. It does not mark the email verified, cannot replace an existing account’s password, and is not callable by browser clients. `adminAccess.revokePending` cancels unclaimed grants; existing admin memberships are managed under Members.
