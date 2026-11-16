@@ -18,6 +18,7 @@ Open a group at `/dashboard/<chamaId>`. Its shared sidebar contains:
 | Reports | Date-filtered group statements, personal member statements, loan statements, Excel `.xlsx` and CSV downloads, browser print/save-as-PDF |
 | Transactions | M-Pesa/bank/cash records with references and running balances |
 | Investments | Record investments, update valuations, record proceeds, show profit/loss, record equal dividend payouts from realized profits |
+| Meetings | Schedule/edit/cancel meetings, attendance register, completion, officer draft minutes and published minutes |
 | Analytics | Six-month inflow/outflow chart, monetary contribution collection rate, arrears, outstanding loans, portfolio returns, member contribution performance |
 | Admin | Group votes and results, officer audit trail, invitations; role changes are under Members and loan approvals under Loans |
 | Notifications | Per-member notifications, read status, officer announcements |
@@ -80,3 +81,12 @@ Analytics includes on-demand AI observations for admin/chairperson and treasurer
 Credit history version 1 is a deterministic internal indicator, not an AI lending decision or a credit bureau score. Active members see their own score; admin/chairperson and treasurer can see all active members' scores. Secretaries see only their own score. Three non-waived contributions that have reached their due date are required; otherwise the score is absent. Contribution amount completion contributes 40 points, recorded on-time completion 30, and the fraction of funded loans without overdue balances/defaults 30. Without loan history, the available 70 points are scaled to 100. Pending/rejected/approved but unfunded loans do not count. Missing payment dates earn no timing points. Future and waived obligations are excluded. Analytics shows factors, sample counts, and version; the Loans table includes the permitted member score alongside applications. Scores reflect manually recorded history only and do not incorporate income or external debt; officers retain independent loan review and approval. No loan limits or approval rules are changed.
 
 Payment execution and actual dividend transfers remain the next integration phase.
+
+
+## Meetings workflow and permissions
+
+Admin/chairperson, treasurer, and secretary manage meetings. Every read/write requires active group membership and checks referenced meetings/members against that group. Scheduling snapshots the active roster as “not recorded”; officers can add newly active members when recording attendance. Existing roster entries remain available after member deactivation. Attendance is one record per meeting/member, with present, absent, excused, or not recorded status; updates replace the status rather than duplicate the entry. Officers see the register; ordinary members see only their own attendance.
+
+New meetings and schedule edits must be in the future; only scheduled meetings that have not started can be rescheduled. Attendance and draft minutes are available after the start time. Only meetings that have started can be marked completed. Published minutes require a completed meeting and nonempty text; drafts are returned only to officers. Minutes can be corrected or returned to draft. Cancelled meetings remain in history and reject further changes; completed meetings cannot be cancelled. All changes and their audit records are atomic. Schedules, schedule changes, cancellations, and first publication notify active members in-app. There is no automatic timed reminder or external calendar integration. Dates are entered and shown in Africa/Nairobi (UTC+3), regardless of the browser timezone.
+
+Legacy standalone pages now redirect to the corresponding group workspace section, preserving that section through remembered-group selection, manual selection, or group creation. Legacy detail links open the record's authorized group list; there is no separate legacy detail editor. Unknown or inaccessible records do not grant access to another group's records.

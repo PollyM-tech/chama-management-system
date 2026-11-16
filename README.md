@@ -4,7 +4,7 @@ A savings group management app using Next.js 16, React 19, TypeScript, Tailwind 
 
 ## Current status
 
-Implemented: authentication, group memberships, the twelve-section responsive workspace, analytics with optional AI insights and explainable internal credit history scores, contribution cycles and partial payments, loan review/disbursement/repayment records, expenses, reconciliation, investments, dividends, voting, reporting, and officer email/WhatsApp invitations. Live M-Pesa/bank transfer execution is not enabled. See [the guide implementation matrix](docs/implementation.md) for behavior, permissions, deployment, and external-service requirements.
+Implemented: authentication, group memberships, the thirteen-section responsive workspace, analytics with optional AI insights and explainable internal credit history scores, contribution cycles and partial payments, loan review/disbursement/repayment records, expenses, reconciliation, investments, dividends, voting, reporting, officer email/WhatsApp invitations, and meetings with attendance and minutes. Live M-Pesa/bank transfer execution is not enabled. See [the guide implementation matrix](docs/implementation.md) for behavior, permissions, deployment, and external-service requirements.
 
 Authentication runs in Convex Auth. WorkOS is no longer used. Next.js handles the login interface and auth cookie proxy; Convex validates credentials, issues sessions, and checks access to application data.
 
@@ -98,3 +98,10 @@ Backend tests use `convex-test` with isolated in-memory data. They cover authent
 Configure a separate production Convex deployment, initialize its auth keys, set its email credentials and production `SITE_URL`, and deploy the backend. Configure the matching public Convex cloud/site URLs in your Next.js hosting environment before building. Convex Auth's Next.js server integration is experimental; see the [official setup guide](https://labs.convex.dev/auth/setup).
 
 The schema links memberships with `userId: Id<"users">` instead of `workosUserId` and types chama `createdBy` as a Convex user ID. Existing WorkOS-backed data needs an explicit migration before using this schema. The added workspace tables are applied by `npx convex dev --once` to the selected development deployment.
+
+
+## Legacy routes and meetings
+
+Older standalone URLs (`/members`, `/contributions`, `/loans`, `/finance`, `/reports`, `/transactions`, `/investments`, `/admin`, `/notifications`, `/settings`, `/contributions/record`, and `/loans/apply`) redirect through the group picker to the matching workspace section. Saved-group and sole-membership selection retain the requested section. Member/loan detail URLs resolve the record's group with backend access checks, then open that group's corresponding list.
+
+Meetings are under `/dashboard/<chamaId>/meetings`. Officers schedule/update/cancel meetings, record attendance, mark meetings complete, and save draft or published minutes. All meeting input and display use East Africa Time. Active members receive in-app notices for schedules, changes, cancellations, and newly published minutes. Apply the new tables/functions to your Convex deployment before opening the updated workspace.

@@ -95,15 +95,15 @@ export function FormPanel({
     const input: Record<string, string | number | boolean | string[]> = { ...fixedInput };
     for (const f of fields) {
       const raw = String(data.get(f.name) ?? "").trim();
-      if (f.optional && !raw && !operation.startsWith("update_")) continue;
+      if (f.optional && !raw && !operation.startsWith("update_") && operation !== "save_minutes") continue;
       input[f.name] =
-        f.type === "date"
-          ? new Date(`${raw}T23:59:59+03:00`).getTime()
-          : f.type === "datetime-local"
-            ? new Date(`${raw}+03:00`).getTime()
-          : f.type === "number"
-            ? Number(raw)
-            : raw;
+        f.type === "datetime-local"
+          ? new Date(`${raw}+03:00`).getTime()
+          : f.type === "date"
+            ? new Date(`${raw}T23:59:59+03:00`).getTime()
+            : f.type === "number"
+              ? Number(raw)
+              : raw;
     }
     setBusy(true);
     setFeedback({});

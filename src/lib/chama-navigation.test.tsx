@@ -22,3 +22,14 @@ describe("post-login group selection", () => {
     );
   });
 });
+
+describe("legacy section destinations", () => {
+  test("preserves a valid section and rejects arbitrary redirect targets", async () => {
+    const { requestedWorkspaceSection, groupSectionPath } = await import("./chama-navigation");
+    expect(groupSectionPath("pamoja", requestedWorkspaceSection("finance"))).toBe("/dashboard/pamoja/finance");
+    expect(requestedWorkspaceSection("https://example.com")).toBe("dashboard");
+    expect(requestedWorkspaceSection("../admin")).toBe("dashboard");
+    expect(requestedWorkspaceSection(null)).toBe("dashboard");
+    expect(groupSectionPath("pamoja", "dashboard")).toBe("/dashboard/pamoja");
+  });
+});

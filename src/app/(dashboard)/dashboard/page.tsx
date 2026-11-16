@@ -1,8 +1,8 @@
 "use client";
 
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
-import { useEffect, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, Users } from "lucide-react";
 import {
@@ -14,20 +14,23 @@ import {
 import { api } from "../../../../convex/_generated/api";
 
 export default function DashboardPage() {
+  return <Suspense fallback={<p role="status">Loading your groups…</p>}><DashboardContent /></Suspense>;
+}
+
+function DashboardContent() {
   const router = useRouter();
   const { isAuthenticated } = useConvexAuth();
   const user = useQuery(api.users.current, isAuthenticated ? {} : "skip");
   const chamas = useQuery(api.chamas.listMine, isAuthenticated ? {} : "skip");
   const create = useMutation(api.chamas.create);
-  const [section, setSection] = useState<ReturnType<typeof requestedWorkspaceSection>>("dashboard");
+  const params = useSearchParams();
+  const section = requestedWorkspaceSection(params.get("section"));
+  const choosing = params.has("choose");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const requested = requestedWorkspaceSection(params.get("section"));
-    setSection(requested);
-    if (!chamas || params.has("choose")) return;
+    if (!chamas || choosing) return;
     let savedId: string | null = null;
     try {
       savedId = window.localStorage.getItem(ACTIVE_CHAMA_KEY);
@@ -35,8 +38,8 @@ export default function DashboardPage() {
       /* Fall back to the available memberships. */
     }
     const chamaId = preferredChamaId(chamas, savedId);
-    if (chamaId) router.replace(groupSectionPath(chamaId, requested));
-  }, [chamas, router]);
+    if (chamaId) router.replace(groupSectionPath(chamaId, section));
+  }, [chamas, router, section, choosing]);
 
   async function createChama(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

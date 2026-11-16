@@ -10,17 +10,14 @@ export async function meetingData(ctx: QueryCtx, chamaId: Id<"chamas">, memberId
     const attendance = await ctx.db.query("meetingAttendance").withIndex("by_meeting", q => q.eq("meetingId", meeting._id)).collect();
     return { ...meeting, minutes: officer || meeting.minutesPublished ? meeting.minutes : "", attendance: attendance.filter(a => officer || a.memberId === memberId) };
   }));
-  return Promise.all(meetings.sort((a, b) => b.startsAt - a.startsAt).map(async m => {
-    const attendance = await ctx.db.query("meetingAttendance").withIndex("by_meeting", q => q.eq("meetingId", m._id)).collect();
-    return { ...m, minutes: officer || m.minutesPublished ? m.minutes : "", attendance: attendance.filter(a => officer || a.memberId === memberId) };
-  }));
+
 }
 
 const details = z.object({
   title: z.string().trim().min(1).max(150),
   location: z.string().trim().min(1).max(500),
   startsAt: z.number().finite().positive().max(8_640_000_000_000_000),
-  agenda: z.string().trim().max(5000),
+  agenda: z.string().trim().max(5000).default(""),
 });
 
 export async function meetingOperation(ctx: MutationCtx, operation: string, input: Record<string, unknown>, member: Doc<"members">) {

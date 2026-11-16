@@ -564,3 +564,66 @@ test("AI provider failures return a useful error", async () => {
   vi.stubEnv("OPENAI_INSIGHTS_MODEL", "test-model");
   await expect(admin.action(api.workspace.generateInsights, { chamaId: ids.chamaId })).rejects.toThrow("Unable to generate insights");
 });
+
+test("meetings notify members; officers manage schedules with group isolation", async () => {
+  const { ids, admin, secretary, member, outsider } = await setup();
+  const input = { title: "Monthly review", location: "Community hall", startsAt: Date.now() + 86400000 };
+  await expect(member.mutation(api.workspace.execute, { chamaId: ids.chamaId, operation: "create_meeting", input })).rejects.toThrow("FORBIDDEN");
+  await expect(outsider.mutation(api.workspace.execute, { chamaId: ids.chamaId, operation: "create_meeting", input })).rejects.toThrow("FORBIDDEN");
+  await secretary.mutation(api.workspace.execute, { chamaId: ids.chamaId, operation: "create_meeting", input });
+  const data = await admin.query(api.workspace.get, { chamaId: ids.chamaId });
+  const meeting = data.meetings[0];
+  expect(meeting.attendance).toHaveLength(4);
+  expect(meeting.agenda).toBe("");
+  expect(meeting.status).toBe("scheduled");
+  const own = await member.query(api.workspace.get, { chamaId: ids.chamaId });
+  expect(own.meetings[0].attendance).toHaveLength(1);
+  expect(own.notifications.some(n => n.title === "Meeting scheduled")).toBe(true);
+  await expect(admin.mutation(api.workspace.execute, { chamaId: ids.chamaId, operation: "create_meeting", input: { ...input, startsAt: Date.now() - 1 } })).rejects.toThrow("MEETING_MUST_BE_IN_FUTURE");
+  await admin.mutation(api.workspace.execute, { chamaId: ids.chamaId, operation: "update_meeting", input: { ...input, id: meeting._id, location: "Online" } });
+  await expect(admin.mutation(api.workspace.execute, { chamaId: ids.chamaId, operation: "complete_meeting", input: { id: meeting._id } })).rejects.toThrow("MEETING_NOT_STARTED");
+  await admin.mutation(api.workspace.execute, { chamaId: ids.chamaId, operation: "cancel_meeting", input: { id: meeting._id } });
+  await expect(admin.mutation(api.workspace.execute, { chamaId: ids.chamaId, operation: "record_attendance", input: { id: meeting._id, memberId: ids.memberIds[3], status: "present" } })).rejects.toThrow("MEETING_CANCELLED");
+  await expect(admin.mutation(api.workspace.execute, { chamaId: ids.otherChama, operation: "cancel_meeting", input: { id: meeting._id } })).rejects.toThrow("FORBIDDEN");
+});
+
+test("attendance is unique and minutes stay private until a completed meeting is published", async () => {
+  const { t, ids, admin, secretary, member } = await setup();
+  await admin.mutation(api.workspace.execute, { chamaId: ids.chamaId, operation: "create_meeting", input: { title: "Review", location: "Hall", startsAt: Date.now() + 100000 } });
+  const meeting = (await admin.query(api.workspace.get, { chamaId: ids.chamaId })).meetings[0];
+  await t.run(ctx => ctx.db.patch(meeting._id, { startsAt: Date.now() - 1000 }));
+  const write = (operation: string, extra = {}) => ({ chamaId: ids.chamaId, operation, input: { id: meeting._id, ...extra } });
+  await expect(member.mutation(api.workspace.execute, write("record_attendance", { memberId: ids.memberIds[3], status: "present" }))).rejects.toThrow("FORBIDDEN");
+  await secretary.mutation(api.workspace.execute, write("record_attendance", { memberId: ids.memberIds[3], status: "present" }));
+  await secretary.mutation(api.workspace.execute, write("record_attendance", { memberId: ids.memberIds[3], status: "excused" }));
+  const attendance = (await member.query(api.workspace.get, { chamaId: ids.chamaId })).meetings[0].attendance;
+  expect(attendance).toHaveLength(1);
+  expect(attendance[0].status).toBe("excused");
+  await secretary.mutation(api.workspace.execute, write("save_minutes", { minutes: "Draft decisions", visibility: "draft" }));
+  expect((await member.query(api.workspace.get, { chamaId: ids.chamaId })).meetings[0].minutes).toBe("");
+  expect((await secretary.query(api.workspace.get, { chamaId: ids.chamaId })).meetings[0].minutes).toBe("Draft decisions");
+  await expect(secretary.mutation(api.workspace.execute, write("save_minutes", { minutes: "Decisions", visibility: "published" }))).rejects.toThrow("COMPLETE_MEETING_BEFORE_PUBLISHING");
+  await secretary.mutation(api.workspace.execute, write("complete_meeting"));
+  await secretary.mutation(api.workspace.execute, write("save_minutes", { minutes: "Agreed decisions", visibility: "published" }));
+  expect((await member.query(api.workspace.get, { chamaId: ids.chamaId })).meetings[0].minutes).toBe("Agreed decisions");
+  await expect(admin.mutation(api.workspace.execute, write("cancel_meeting"))).rejects.toThrow("MEETING_ALREADY_COMPLETED");
+  await secretary.mutation(api.workspace.execute, write("save_minutes", { minutes: "Correction in progress", visibility: "draft" }));
+  expect((await member.query(api.workspace.get, { chamaId: ids.chamaId })).meetings[0].minutes).toBe("");
+});
+
+test("legacy record links resolve only records the caller may access", async () => {
+  const { ids, admin, outsider, member } = await setup();
+  expect(await admin.query(api.workspace.legacyRecordGroup, { table: "members", id: ids.memberIds[3] })).toBe(ids.chamaId);
+  await expect(outsider.query(api.workspace.legacyRecordGroup, { table: "members", id: ids.memberIds[3] })).rejects.toThrow("FORBIDDEN");
+  expect(await member.query(api.workspace.legacyRecordGroup, { table: "members", id: "invalid" })).toBeNull();
+});
+
+test("officer status in another group cannot mutate a meeting across groups", async () => {
+  const { t, ids, admin, outsider } = await setup();
+  await t.run(ctx => ctx.db.insert("members", { chamaId: ids.otherChama, userId: ids.users[5], name: "Other admin", email: "outsider@example.com", phone: "", role: "admin", isActive: true, joinedAt: Date.now() }));
+  await admin.mutation(api.workspace.execute, { chamaId: ids.chamaId, operation: "create_meeting", input: { title: "Private meeting", location: "Hall", startsAt: Date.now() + 100000 } });
+  const meeting = (await admin.query(api.workspace.get, { chamaId: ids.chamaId })).meetings[0];
+  await expect(outsider.mutation(api.workspace.execute, { chamaId: ids.otherChama, operation: "cancel_meeting", input: { id: meeting._id } })).rejects.toThrow("FORBIDDEN");
+  expect((await outsider.query(api.workspace.get, { chamaId: ids.otherChama })).meetings).toHaveLength(0);
+  expect((await admin.query(api.workspace.get, { chamaId: ids.chamaId })).meetings[0].status).toBe("scheduled");
+});
