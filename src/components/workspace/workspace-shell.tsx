@@ -6,6 +6,7 @@ import { usePreloadedQuery, type Preloaded } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import {
   Activity,
+  CalendarDays,
   Bell,
   ChartNoAxesCombined,
   ClipboardList,
@@ -45,6 +46,7 @@ const icons = {
   transactions: Activity,
   investments: Sprout,
   analytics: ChartNoAxesCombined,
+  meetings: CalendarDays,
   admin: ShieldCheck,
   notifications: Bell,
   settings: Settings,

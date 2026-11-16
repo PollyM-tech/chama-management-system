@@ -4,7 +4,7 @@ A savings group management app using Next.js 16, React 19, TypeScript, Tailwind 
 
 ## Current status
 
-Implemented: authentication, group memberships, the twelve-section responsive workspace, analytics, contribution cycles and partial payments, loan review/disbursement/repayment records, expenses, reconciliation, investments, dividends, voting, reporting, and officer email/WhatsApp invitations. Live M-Pesa/bank transfer execution is not enabled. See [the guide implementation matrix](docs/implementation.md) for behavior, permissions, deployment, and external-service requirements.
+Implemented: authentication, group memberships, the twelve-section responsive workspace, analytics with optional AI insights and explainable internal credit history scores, contribution cycles and partial payments, loan review/disbursement/repayment records, expenses, reconciliation, investments, dividends, voting, reporting, and officer email/WhatsApp invitations. Live M-Pesa/bank transfer execution is not enabled. See [the guide implementation matrix](docs/implementation.md) for behavior, permissions, deployment, and external-service requirements.
 
 Authentication runs in Convex Auth. WorkOS is no longer used. Next.js handles the login interface and auth cookie proxy; Convex validates credentials, issues sessions, and checks access to application data.
 

@@ -523,3 +523,44 @@ test("legacy unrestricted links and invitations from inactive officers cannot gr
   await t.run(ctx => ctx.db.patch(ids.memberIds[2], { isActive: false }));
   await expect(candidate.mutation(api.invitations.accept, { token: url.split("/").at(-1)!, name: "Candidate", phone: "0712345678" })).rejects.toThrow("INVITATION_NEEDS_REISSUE");
 });
+
+test("credit history is private to the member and financial officers", async () => {
+  const { ids, admin, member, secretary, outsider } = await setup();
+  expect((await admin.query(api.workspace.get, { chamaId: ids.chamaId })).creditScores).toHaveLength(4);
+  const own = (await member.query(api.workspace.get, { chamaId: ids.chamaId })).creditScores;
+  expect(own).toHaveLength(1);
+  expect(own[0].memberId).toBe(ids.memberIds[3]);
+  expect(own[0].score).toBeNull();
+  expect((await secretary.query(api.workspace.get, { chamaId: ids.chamaId })).creditScores).toHaveLength(1);
+  await expect(outsider.query(api.workspace.get, { chamaId: ids.chamaId })).rejects.toThrow("FORBIDDEN");
+});
+
+test("AI insights reject unauthorized callers before contacting provider", async () => {
+  const { ids, member, outsider } = await setup();
+  await expect(member.action(api.workspace.generateInsights, { chamaId: ids.chamaId })).rejects.toThrow("FORBIDDEN");
+  await expect(outsider.action(api.workspace.generateInsights, { chamaId: ids.chamaId })).rejects.toThrow("FORBIDDEN");
+  expect(fetch).not.toHaveBeenCalled();
+});
+
+test("AI insights send only aggregate figures, and rate limit group requests", async () => {
+  const { ids, admin } = await setup();
+  vi.stubEnv("OPENAI_API_KEY", "test-key");
+  vi.stubEnv("OPENAI_INSIGHTS_MODEL", "test-model");
+  const provider = vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({ status: "completed", output: [{ type: "message", content: [{ type: "output_text", text: "Not enough history to establish a trend." }] }] })));
+  const result = await admin.action(api.workspace.generateInsights, { chamaId: ids.chamaId });
+  expect(result.text).toContain("Not enough history");
+  const body = JSON.parse(String(provider.mock.calls[0][1]?.body));
+  expect(body.store).toBe(false);
+  expect(body.input).not.toContain("example.com");
+  expect(body.input).not.toContain("memberId");
+  expect(body.input).not.toContain("creditScores");
+  await expect(admin.action(api.workspace.generateInsights, { chamaId: ids.chamaId })).rejects.toThrow("one minute");
+  expect(provider).toHaveBeenCalledTimes(1);
+});
+
+test("AI provider failures return a useful error", async () => {
+  const { ids, admin } = await setup();
+  vi.stubEnv("OPENAI_API_KEY", "test-key");
+  vi.stubEnv("OPENAI_INSIGHTS_MODEL", "test-model");
+  await expect(admin.action(api.workspace.generateInsights, { chamaId: ids.chamaId })).rejects.toThrow("Unable to generate insights");
+});

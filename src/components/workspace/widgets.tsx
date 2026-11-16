@@ -25,6 +25,11 @@ export function humanError(error: unknown) {
         : "";
   const codes: Record<string, string> = {
     FORBIDDEN: "Your role does not allow this action.",
+    MEETING_MUST_BE_IN_FUTURE: "Schedule or edit meetings before their start time, using a future date.",
+    MEETING_CANCELLED: "This meeting has been cancelled and cannot be changed.",
+    MEETING_ALREADY_COMPLETED: "Completed meetings cannot be cancelled.",
+    MEETING_NOT_STARTED: "Attendance, minutes, and completion are available once the meeting starts.",
+    COMPLETE_MEETING_BEFORE_PUBLISHING: "Complete the meeting and enter minutes before publishing.",
     INSUFFICIENT_GROUP_FUNDS: "The group has insufficient available funds.",
     PAYMENT_REFERENCE_ALREADY_RECORDED:
       "This payment reference has already been recorded.",
@@ -51,7 +56,7 @@ export function humanError(error: unknown) {
 export type Field = {
   name: string;
   label: string;
-  type?: "text" | "email" | "number" | "date" | "textarea" | "select";
+  type?: "text" | "email" | "number" | "date" | "datetime-local" | "textarea" | "select";
   options?: { value: string; label: string }[];
   value?: string | number;
   min?: number;
@@ -67,12 +72,14 @@ export function FormPanel({
   operation,
   fields,
   button = "Save record",
+  fixedInput = {},
 }: {
   title: string;
   description?: string;
   operation: string;
   fields: Field[];
   button?: string;
+  fixedInput?: Record<string, string | number | boolean | string[]>;
 }) {
   const { chama } = useWorkspace();
   const execute = useMutation(api.workspace.execute);
@@ -85,13 +92,15 @@ export function FormPanel({
     event.preventDefault();
     const form = event.currentTarget;
     const data = new FormData(form);
-    const input: Record<string, string | number | boolean | string[]> = {};
+    const input: Record<string, string | number | boolean | string[]> = { ...fixedInput };
     for (const f of fields) {
       const raw = String(data.get(f.name) ?? "").trim();
       if (f.optional && !raw && !operation.startsWith("update_")) continue;
       input[f.name] =
         f.type === "date"
           ? new Date(`${raw}T23:59:59+03:00`).getTime()
+          : f.type === "datetime-local"
+            ? new Date(`${raw}+03:00`).getTime()
           : f.type === "number"
             ? Number(raw)
             : raw;

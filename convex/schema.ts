@@ -4,6 +4,19 @@ import { authTables } from "@convex-dev/auth/server";
 
 export default defineSchema({
   ...authTables,
+  meetings: defineTable({
+    chamaId: v.id("chamas"), title: v.string(), location: v.string(),
+    startsAt: v.number(), agenda: v.string(),
+    status: v.union(v.literal("scheduled"), v.literal("completed"), v.literal("cancelled")),
+    minutes: v.string(), minutesPublished: v.boolean(),
+    createdBy: v.id("users"), createdAt: v.number(), updatedAt: v.number(),
+  }).index("by_chama", ["chamaId"]),
+  meetingAttendance: defineTable({
+    chamaId: v.id("chamas"), meetingId: v.id("meetings"), memberId: v.id("members"),
+    memberName: v.string(),
+    status: v.union(v.literal("unrecorded"), v.literal("present"), v.literal("absent"), v.literal("excused")),
+  }).index("by_meeting", ["meetingId"]).index("by_meeting_member", ["meetingId", "memberId"]),
+  insightRequests: defineTable({ chamaId: v.id("chamas"), requestedAt: v.number() }).index("by_chama", ["chamaId"]),
   adminAccessGrants: defineTable({
     email: v.string(),
     chamaIds: v.array(v.id("chamas")),

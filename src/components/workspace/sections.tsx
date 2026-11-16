@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useAction } from "convex/react";
 import { Download, Printer, ShieldCheck } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import {
@@ -25,6 +25,7 @@ import {
   Stats,
   Table,
 } from "./widgets";
+import { Meetings } from "./meetings";
 import { InvitationsPanel } from "./invitations-panel";
 
 function useAccess() {
@@ -441,7 +442,7 @@ function Contributions() {
 }
 
 function Loans() {
-  const { loans, chama, member, canAdmin, canFinance } = useAccess();
+  const { loans, chama, member, canAdmin, canFinance, creditScores } = useAccess();
   const active = loans.filter((l) =>
     ["active", "disbursed", "defaulted"].includes(l.status),
   );
@@ -457,6 +458,7 @@ function Loans() {
             "Principal",
             "Repayable",
             "Remaining",
+            "Credit history",
             "Status",
             "Action",
           ]}
@@ -469,6 +471,7 @@ function Loans() {
             money(l.principalAmount),
             money(l.totalRepayable),
             money(l.remaining),
+            (() => { const history = creditScores.find(c => c.memberId === l.memberId); return history ? `${history.score === null ? "No score" : `${history.score}/100`} · ${history.band}` : "Private"; })(),
             <Badge key="status" value={l.status} />,
             <span key="actions" className="workspace-actions">
               {canAdmin &&
@@ -815,6 +818,37 @@ function Investments() {
   );
 }
 
+function Intelligence() {
+  const { chama, member, creditScores } = useWorkspace();
+  const generate = useAction(api.workspace.generateInsights);
+  const [result, setResult] = useState<{ text: string; generatedAt: number } | null>(null);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const canGenerate = (FINANCE_ROLES as readonly string[]).includes(member.role);
+  async function run() {
+    setBusy(true); setError(""); setResult(null);
+    try { setResult(await generate({ chamaId: chama._id })); }
+    catch (e) { setError(e instanceof Error && e.message.includes("not configured") ? "AI insights are not configured. Ask your administrator to configure the AI service." : "Unable to generate insights. Check your access and AI configuration, or retry in one minute."); }
+    finally { setBusy(false); }
+  }
+  return <>
+    {canGenerate && <section className="workspace-card">
+      <h2 className="workspace-section-heading">AI financial insights</h2>
+      <p>Generate observations from the current group totals and six-month cash flow. Only aggregate figures are sent to OpenAI.</p>
+      <button type="button" className="workspace-button" disabled={busy} onClick={run}>{busy ? "Generating insights…" : "Generate insights"}</button>
+      {error && <p role="alert">{error}</p>}
+      {result && <div aria-live="polite"><p style={{ whiteSpace: "pre-wrap" }}>{result.text}</p><small>Generated {new Date(result.generatedAt).toLocaleString("en-KE", { timeZone: "Africa/Nairobi" })}. Snapshot of manually recorded data; review against current records.</small></div>}
+    </section>}
+    <section className="workspace-card">
+      <h2 className="workspace-section-heading">Credit history scores</h2>
+      <p>Internal history indicator (0–100), version 1. Officers make lending decisions. This is not a credit bureau score or a prediction of repayment.</p>
+      <p>Requires three due contributions. Contribution completion carries 40 points, recorded on-time completion 30, and loans without overdue balances 30. When there is no loan history, the available 70 points are scaled to 100. Missing payment dates earn no timing points; waived and future contributions are excluded.</p>
+      <Table headings={["Member", "Score", "History", "Due contributions", "Overdue loans", "Factors"]} rows={creditScores.map(c => [c.memberName, c.score === null ? "—" : `${c.score}/100`, c.band, String(c.dueContributions), String(c.overdueLoans), c.factors.map(f => `${f.label}: ${f.points}/${f.maximum}`).join("; ")])} />
+      <p>Members see their own score. Chairpersons and treasurers can review all active members. Correct inaccurate payment records before using a score in a review.</p>
+    </section>
+  </>;
+}
+
 function Analytics() {
   const { stats, investments, contributions } = useWorkspace();
   const principal = investments.reduce((s, i) => s + i.principalAmount, 0);
@@ -836,6 +870,7 @@ function Analytics() {
       />
       <div className="workspace-stack">
         <CashFlowChart />
+        <Intelligence />
         <section className="workspace-card">
           <h2 className="workspace-section-heading">
             Contribution performance
@@ -1203,6 +1238,7 @@ const descriptions: Record<WorkspaceSection, string> = {
   dashboard:
     "Your group’s financial position, activity, and decisions in one place.",
   members: "Manage profiles, membership access, and invitations.",
+  meetings: "Schedule meetings, record attendance, and share minutes with your group.",
   contributions:
     "Track cycles, received payments, arrears, and contribution obligations.",
   loans:
@@ -1240,6 +1276,7 @@ export function WorkspaceSectionView({
     ),
     investments: <Investments />,
     analytics: <Analytics />,
+    meetings: <Meetings />,
     admin: <Admin />,
     notifications: <Notifications />,
     settings: <Settings />,

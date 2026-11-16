@@ -1,10 +1,14 @@
-import { mutation, query } from "./_generated/server";
+import { mutation, query, action, internalMutation } from "./_generated/server";
 import { v, ConvexError } from "convex/values";
 import { z } from "zod";
 import { requireMembership } from "./lib/auth";
 import { ADMIN_ROLES, FINANCE_ROLES, OFFICERS } from "../shared/workspace";
 import { addMonths, cents, postTransaction } from "./lib/ledger";
 import type { TableNames, Doc } from "./_generated/dataModel";
+
+import { api, internal } from "./_generated/api";
+import { meetingData, meetingOperation } from "./lib/meetings";
+import { creditAssessment } from "../shared/credit";
 
 const amount = z.coerce
   .number()
@@ -183,6 +187,12 @@ export const get = query({
       };
     });
     return {
+      meetings: await meetingData(ctx, chamaId, member._id, officer),
+      creditScores: members.filter(m => m.isActive && ((FINANCE_ROLES as readonly string[]).includes(member.role) || m._id === member._id)).map(m => ({
+        memberId: m._id,
+        memberName: m.name,
+        ...creditAssessment(enrichedContributions.filter(c => c.memberId === m._id), loans.filter(l => l.memberId === m._id), Date.now()),
+      })),
       chama,
       member,
       officer,
@@ -314,7 +324,9 @@ export const execute = mutation({
         action: operation.replaceAll("_", " "),
         createdAt: Date.now(),
       });
-    if (operation === "create_cycle") {
+    if (await meetingOperation(ctx, operation, input, member)) {
+      // Meeting writes share the workspace audit transaction below.
+    } else if (operation === "create_cycle") {
       check(FINANCE_ROLES);
       const a = z.object({ name: text, amount, dueDate: date }).parse(input);
       if (a.dueDate <= Date.now())
@@ -830,5 +842,66 @@ export const execute = mutation({
     } else throw new ConvexError("UNKNOWN_OPERATION");
     await audit();
     return { success: true };
+  },
+});
+
+
+export const reserveInsight = internalMutation({
+  args: { chamaId: v.id("chamas") },
+  handler: async (ctx, { chamaId }) => {
+    await requireMembership(ctx, chamaId, FINANCE_ROLES);
+    const previous = await ctx.db.query("insightRequests").withIndex("by_chama", q => q.eq("chamaId", chamaId)).unique();
+    if (previous && Date.now() - previous.requestedAt < 60_000) throw new ConvexError("Please wait one minute before generating another insight.");
+    if (previous) await ctx.db.patch(previous._id, { requestedAt: Date.now() });
+    else await ctx.db.insert("insightRequests", { chamaId, requestedAt: Date.now() });
+  },
+});
+
+export const generateInsights = action({
+  args: { chamaId: v.id("chamas") },
+  handler: async (ctx, { chamaId }): Promise<{ text: string; generatedAt: number }> => {
+    // Authorize and reserve atomically before making a paid external request.
+    await ctx.runMutation(internal.workspace.reserveInsight, { chamaId });
+    const data = await ctx.runQuery(api.workspace.get, { chamaId });
+    const key = process.env.OPENAI_API_KEY;
+    const model = process.env.OPENAI_INSIGHTS_MODEL;
+    if (!key || !model) throw new ConvexError("AI insights are not configured. Ask the deployment administrator to set OPENAI_API_KEY and OPENAI_INSIGHTS_MODEL.");
+    try {
+      const response = await fetch("https://api.openai.com/v1/responses", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(30_000),
+        body: JSON.stringify({
+          model, store: false, max_output_tokens: 1200,
+          instructions: "You explain a Kenyan savings group's financial records. Use only the supplied aggregate snapshot in KES. Give a short summary and up to three practical operational observations, with the figures supporting each. State when history is insufficient. Distinguish overdue amounts from amounts not yet due. Do not give investment recommendations, assess individuals, make lending decisions, invent trends, or claim to predict outcomes. All entries are manually recorded and may be incomplete. Use plain text.",
+          input: JSON.stringify({ balance: data.chama.totalPool, statistics: { ...data.stats, arrears: undefined, unpaidContributionsIncludingFuture: data.stats.arrears, overdueContributions: data.contributions.filter(c => c.status !== "waived" && c.dueDate < Date.now()).reduce((sum, c) => sum + Math.max(0, c.expected - c.paid), 0) }, monthlyCashFlow: data.trend, snapshotAt: new Date().toISOString() }),
+        }),
+      });
+      if (!response.ok) throw new Error("Provider failed");
+      const result = await response.json();
+      const parsed = z.object({ status: z.literal("completed"), output: z.array(z.object({ type: z.string(), content: z.array(z.object({ type: z.string(), text: z.string().optional() })).optional() })) }).parse(result);
+      const output = parsed.output.filter(item => item.type === "message").flatMap(item => item.content ?? []).filter(item => item.type === "output_text").map(item => item.text ?? "").join("\n").trim();
+      if (!output || output.length > 12000) throw new Error("Invalid response");
+      // Recheck access after the external request, including session revocation.
+      const current = await ctx.runQuery(api.workspace.get, { chamaId });
+      if (!(FINANCE_ROLES as readonly string[]).includes(current.member.role)) throw new Error("Access changed");
+      return { text: output, generatedAt: Date.now() };
+    } catch {
+      throw new ConvexError("Unable to generate insights. Please try again later.");
+    }
+  },
+});
+
+
+export const legacyRecordGroup = query({
+  args: { table: v.union(v.literal("members"), v.literal("loans")), id: v.string() },
+  handler: async (ctx, { table, id: raw }) => {
+    const id = ctx.db.normalizeId(table, raw);
+    if (!id) return null;
+    const record = await ctx.db.get(id);
+    if (!record) return null;
+    const { member } = await requireMembership(ctx, record.chamaId);
+    if (table === "loans" && "memberId" in record && record.memberId !== member._id && !(OFFICERS as readonly string[]).includes(member.role)) return null;
+    return record.chamaId;
   },
 });

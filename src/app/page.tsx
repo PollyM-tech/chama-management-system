@@ -43,7 +43,7 @@ const links = [
 
 export default function Home() {
   return (
-    <div id="top" className="landing-page landing-page-photo">
+    <div id="top" className="landing-page landing-page-photo landing-first-look">
       <a className="landing-skip-link" href="#main-content">
         Skip to content
       </a>
@@ -101,86 +101,65 @@ export default function Home() {
           >
             <div className="hero-copy">
               <span className="hero-eyebrow">
-                Built for Modern Kenyan Chamas{" "}
-                <span role="img" aria-label="Kenya">
-                  🇰🇪
-                </span>
+                Chama management for Kenyan savings groups
+                <span role="img" aria-label="Kenya">🇰🇪</span>
               </span>
               <h1 id="hero-heading">
-                Manage Your Chama
-                <br />
-                with{" "}
-                <span>
-                  Clarity, Trust
-                  <br />
-                  and Speed.
-                </span>
+                Know who has paid.<br />
+                <span>Keep your chama on track.</span>
               </h1>
               <p>
-                Bring your members together with a clearer view of your chama.
-                Explore contributions, loans, and reporting in one shared
-                dashboard. Less confusion. More moving forward, together.
+                Track contributions, manage loans, and share clear reports in
+                one place. Spend less time chasing payments and searching
+                through notebooks and WhatsApp messages.
               </p>
+              <ul className="hero-outcomes" aria-label="What SmartChama helps you do">
+                <li><Check size={17} aria-hidden="true" /><span>See paid contributions and unpaid balances.</span></li>
+                <li><Check size={17} aria-hidden="true" /><span>Follow loan approvals and repayments.</span></li>
+                <li><Check size={17} aria-hidden="true" /><span>Give members a clear view of their records.</span></li>
+              </ul>
               <div className="hero-actions">
                 <Link href={signUp} className="landing-button button-green">
-                  Create your chama <ArrowRight size={16} />
+                  Create your chama <ArrowRight size={16} aria-hidden="true" />
                 </Link>
-                <a href="#features" className="landing-button button-outline">
-                  Explore features <ArrowUpRight size={15} />
+                <a href="#dashboard-preview" className="landing-button button-outline">
+                  Try the dashboard <ArrowUpRight size={15} aria-hidden="true" />
                 </a>
               </div>
-              <div className="hero-assurances">
-                <div>
-                  <span className="assurance-icon">
-                    <Users size={17} />
-                  </span>
-                  <span>
-                    <strong>One shared view</strong>
-                    <small>A stronger group</small>
-                  </span>
-                </div>
-                <div>
-                  <span className="assurance-icon">
-                    <Wallet size={17} />
-                  </span>
-                  <span>
-                    <strong>Made for Kenya</strong>
-                    <small>Your savings, in KES</small>
-                  </span>
-                </div>
-                <div>
-                  <span className="assurance-icon">
-                    <ShieldCheck size={17} />
-                  </span>
-                  <span>
-                    <strong>Access with care</strong>
-                    <small>Roles for your members</small>
-                  </span>
-                </div>
+              <div className="hero-start-guide">
+                <span>How to get started</span>
+                <ol>
+                  <li><b>1</b> Create your group</li>
+                  <li><b>2</b> Invite members</li>
+                  <li><b>3</b> Track together</li>
+                </ol>
               </div>
             </div>
-            <DemoDashboard />
+            <div id="dashboard-preview" className="hero-preview" tabIndex={-1}
+              role="region" aria-label="Try a sample SmartChama dashboard">
+              <DemoDashboard />
+            </div>
           </section>
           <div id="features" className="feature-ribbon landing-container">
             {[
               {
                 icon: ShieldCheck,
-                title: "Transparent",
-                text: "Transactions",
+                title: "Know what came in",
+                text: "Contribution records",
               },
               {
                 icon: HandCoins,
-                title: "Easy",
-                text: "Loan tracking",
+                title: "Follow every loan",
+                text: "Repayment tracking",
               },
-              { icon: BookOpenCheck, title: "Clean", text: "Member records" },
+              { icon: BookOpenCheck, title: "Keep members informed", text: "Individual records" },
               {
                 icon: FileChartColumn,
-                title: "Reports",
-                text: "At a glance",
+                title: "See the bigger picture",
+                text: "Financial reports",
               },
             ].map(({ icon: Icon, title, text }) => (
-              <a href="#mobile" key={title}>
+              <a href="#dashboard-preview" key={title}>
                 <span>
                   <Icon size={20} />
                 </span>

@@ -7,7 +7,8 @@ import Link from "next/link";
 import { ArrowRight, Users } from "lucide-react";
 import {
   ACTIVE_CHAMA_KEY,
-  groupDashboardPath,
+  groupSectionPath,
+  requestedWorkspaceSection,
   preferredChamaId,
 } from "@/lib/chama-navigation";
 import { api } from "../../../../convex/_generated/api";
@@ -18,12 +19,15 @@ export default function DashboardPage() {
   const user = useQuery(api.users.current, isAuthenticated ? {} : "skip");
   const chamas = useQuery(api.chamas.listMine, isAuthenticated ? {} : "skip");
   const create = useMutation(api.chamas.create);
+  const [section, setSection] = useState<ReturnType<typeof requestedWorkspaceSection>>("dashboard");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!chamas || new URLSearchParams(window.location.search).has("choose"))
-      return;
+    const params = new URLSearchParams(window.location.search);
+    const requested = requestedWorkspaceSection(params.get("section"));
+    setSection(requested);
+    if (!chamas || params.has("choose")) return;
     let savedId: string | null = null;
     try {
       savedId = window.localStorage.getItem(ACTIVE_CHAMA_KEY);
@@ -31,7 +35,7 @@ export default function DashboardPage() {
       /* Fall back to the available memberships. */
     }
     const chamaId = preferredChamaId(chamas, savedId);
-    if (chamaId) router.replace(groupDashboardPath(chamaId));
+    if (chamaId) router.replace(groupSectionPath(chamaId, requested));
   }, [chamas, router]);
 
   async function createChama(event: FormEvent<HTMLFormElement>) {
@@ -47,7 +51,7 @@ export default function DashboardPage() {
         contributionCycle: "monthly",
       });
       form.reset();
-      router.push(groupDashboardPath(chamaId));
+      router.push(groupSectionPath(chamaId, section));
     } catch {
       setError("Unable to create your chama. Check the details and try again.");
     } finally {
@@ -78,7 +82,7 @@ export default function DashboardPage() {
           {chamas.map((chama) => (
             <Link
               key={chama._id}
-              href={groupDashboardPath(chama._id)}
+              href={groupSectionPath(chama._id, section)}
               className="group min-w-0 rounded-xl border border-zinc-200 bg-white p-6 transition hover:border-emerald-500 hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700"
             >
               <span className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">

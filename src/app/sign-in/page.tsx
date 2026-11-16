@@ -103,7 +103,11 @@ function SignInForm() {
             ? `Enter the eight-digit code sent to ${email}. Codes expire after 10 minutes.`
             : step === "reset"
               ? "If you have an account, we’ll send you a recovery code."
-              : BRAND_TAGLINE}
+              : step === "signUp"
+                ? safeReturnPath(searchParams.get("next")).startsWith("/join/")
+                  ? "Create and verify your account to accept your group invitation. Your assigned role and member details come next."
+                  : "Create your account, verify your email, then set up your chama. Joining an existing group? Use the invitation link your group sent you."
+                : BRAND_TAGLINE}
         </p>
         <form onSubmit={submit} className="mt-7 space-y-5">
           {step === "signUp" && (
