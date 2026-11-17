@@ -192,3 +192,20 @@ test("backend rejects weak passwords and invalid email without creating accounts
     expect(await ctx.db.query("users").collect()).toEqual([]);
   });
 });
+
+test("failed verification delivery leaves no session and can be resumed by signing in after email is fixed", async () => {
+  const t = convexTest(schema, modules);
+  vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({ message: "Test sender restricted" }), { status: 403 }));
+  await expect(t.action(api.auth.signIn, { provider: "password", params: { flow: "signUp", email: "test@example.com", password, name: "Test" } })).rejects.toThrow("AUTH_EMAIL_SENDER_REJECTED");
+  await t.run(async ctx => {
+    const user = await ctx.db.query("users").unique();
+    expect(user?.emailVerificationTime).toBeUndefined();
+    expect(await ctx.db.query("authSessions").collect()).toHaveLength(0);
+  });
+  // The existing mocked sender now succeeds, as a verified sender would.
+  const resumed = await t.action(api.auth.signIn, { provider: "password", params: { flow: "signIn", email: "test@example.com", password } });
+  expect(resumed.tokens).toBeNull();
+  expect(deliveredCode).toMatch(/^\d{8}$/);
+  const verified = await t.action(api.auth.signIn, { provider: "password", params: { flow: "email-verification", email: "test@example.com", code: deliveredCode } });
+  expect(verified.tokens?.token).toBeTruthy();
+});

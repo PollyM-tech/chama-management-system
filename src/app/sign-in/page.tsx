@@ -7,6 +7,7 @@ import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { api } from "../../../convex/_generated/api";
 import { BrandLogo } from "@/components/brand-logo";
 import { BRAND_TAGLINE } from "../../../shared/brand";
+import { authEmailError } from "../../../shared/auth-errors";
 import { safeReturnPath } from "../../../shared/workspace";
 
 type Step =
@@ -69,14 +70,14 @@ function SignInForm() {
         setStep("reset-verification");
       } else {
         setError(
-          step === "signIn"
+          authEmailError(cause) ?? (step === "signIn"
             ? "Unable to sign in. Check your email and password and try again."
             : step === "signUp"
               ? cause instanceof Error &&
                 /\baccount\b[^\n]*\balready exists\b/i.test(cause.message)
                 ? "An account with this email already exists. Sign in, or use Forgot password to recover your account."
                 : "Unable to create your account. Check your details, or try signing in."
-              : "Unable to verify the code. It may have expired. Try again or start over.",
+              : "Unable to verify the code. It may have expired. Try again or start over."),
         );
       }
     } finally {

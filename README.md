@@ -71,7 +71,7 @@ Roles belong to a membership in a particular chama, not globally to the user:
 | Operation | Backend requirement |
 | --- | --- |
 | Read own profile or list own active groups | Authenticated, verified user |
-| Create a group | Authenticated, verified user; becomes admin only of the new group |
+| Create a group | Authenticated, verified user; chooses a role in the new group; a chairperson is required |
 | Read a group | Active membership in that active group |
 | Read member contacts | Admin/chairperson, treasurer, or secretary in that group |
 | Create or revoke invitations | Admin/chairperson, treasurer, or secretary in that group |
@@ -105,3 +105,6 @@ Memberships use `userId: Id<"users">` and group `createdBy` references a Convex 
 Older standalone URLs (`/members`, `/contributions`, `/loans`, `/finance`, `/reports`, `/transactions`, `/investments`, `/admin`, `/notifications`, `/settings`, `/contributions/record`, and `/loans/apply`) redirect through the group picker to the matching workspace section. Saved-group and sole-membership selection retain the requested section. Member/loan detail URLs resolve the record's group with backend access checks, then open that group's corresponding list.
 
 Meetings are under `/dashboard/<chamaId>/meetings`. Officers schedule/update/cancel meetings, record attendance, mark meetings complete, and save draft or published minutes. All meeting input and display use East Africa Time. Active members receive in-app notices for schedules, changes, cancellations, and newly published minutes. Apply the new tables/functions to your Convex deployment before opening the updated workspace.
+
+
+When creating a group, choose Chairperson, Treasurer, Secretary, or Member. Chairperson is the default. Choosing another role requires another verified user's email; that person is added as chairperson atomically with group creation. Roles in existing groups are unaffected. Older API clients that omit the role retain the previous admin default.

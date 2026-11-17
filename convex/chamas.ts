@@ -78,6 +78,8 @@ export const dashboard = query({
 export const create = mutation({
   args: {
     name: v.string(),
+    role: v.optional(v.union(v.literal("admin"), v.literal("chairperson"), v.literal("treasurer"), v.literal("secretary"), v.literal("member"))),
+    chairpersonEmail: v.optional(v.string()),
     contributionAmount: v.number(),
     contributionCycle: v.union(
       v.literal("weekly"),
@@ -95,10 +97,20 @@ export const create = mutation({
       args.contributionAmount <= 0
     )
       throw new ConvexError("INVALID_CHAMA_DETAILS");
+    const role = args.role ?? "admin";
+    let chairperson = null;
+    if (!["admin", "chairperson"].includes(role)) {
+      const email = args.chairpersonEmail?.trim().toLowerCase();
+      if (!email) throw new ConvexError("CHAIRPERSON_EMAIL_REQUIRED");
+      chairperson = await ctx.db.query("users").withIndex("email", q => q.eq("email", email)).unique();
+      if (!chairperson?.emailVerificationTime) throw new ConvexError("VERIFIED_CHAIRPERSON_REQUIRED");
+      if (chairperson._id === user._id) throw new ConvexError("DIFFERENT_CHAIRPERSON_REQUIRED");
+    }
     const now = Date.now();
     const chamaId = await ctx.db.insert("chamas", {
-      ...args,
       name,
+      contributionAmount: args.contributionAmount,
+      contributionCycle: args.contributionCycle,
       totalPool: 0,
       createdBy: user._id,
       createdAt: now,
@@ -111,9 +123,13 @@ export const create = mutation({
       name: user.name ?? "Member",
       email: user.email!,
       phone: "",
-      role: "admin",
+      role,
       joinedAt: now,
       isActive: true,
+    });
+    if (chairperson) await ctx.db.insert("members", {
+      chamaId, userId: chairperson._id, name: chairperson.name ?? "Chairperson",
+      email: chairperson.email!, phone: "", role: "chairperson", joinedAt: now, isActive: true,
     });
     return chamaId;
   },

@@ -334,3 +334,29 @@ describe("backend authentication and authorization", () => {
     ).rejects.toThrow("FORBIDDEN");
   });
 });
+
+test("new group creators can choose their role while retaining a chairperson", async () => {
+  for (const role of ["chairperson", "treasurer", "secretary", "member"] as const) {
+    const { outsider, admin, ids } = await fixture();
+    const chamaId = await outsider.mutation(api.chamas.create, {
+      name: `New ${role} group`, contributionAmount: 500, contributionCycle: "monthly", role,
+      ...(role === "chairperson" ? {} : { chairpersonEmail: "  ADMIN@EXAMPLE.COM  " }),
+    });
+    const mine = await outsider.query(api.chamas.listMine, {});
+    expect(mine.find(c => c._id === chamaId)?.role).toBe(role);
+    const members = await admin.query(api.members.list, { chamaId }).catch(() => outsider.query(api.members.list, { chamaId }));
+    expect(members.some(m => m.role === "chairperson" && m.isActive)).toBe(true);
+    if (role !== "chairperson") expect(members.find(m => m.userId === ids.admin)?.role).toBe("chairperson");
+    await expect(outsider.query(api.chamas.get, { chamaId: ids.chama })).rejects.toThrow("FORBIDDEN");
+  }
+});
+
+test("non-chairperson creation requires a different verified chairperson and rolls back on failure", async () => {
+  const { t, outsider } = await fixture();
+  const input = { name: "Invalid group", contributionAmount: 500, contributionCycle: "monthly" as const, role: "treasurer" as const };
+  const before = await t.run(ctx => ctx.db.query("chamas").collect());
+  await expect(outsider.mutation(api.chamas.create, input)).rejects.toThrow("CHAIRPERSON_EMAIL_REQUIRED");
+  await expect(outsider.mutation(api.chamas.create, { ...input, chairpersonEmail: "unverified@example.com" })).rejects.toThrow("VERIFIED_CHAIRPERSON_REQUIRED");
+  await expect(outsider.mutation(api.chamas.create, { ...input, chairpersonEmail: "outsider@example.com" })).rejects.toThrow("DIFFERENT_CHAIRPERSON_REQUIRED");
+  expect(await t.run(ctx => ctx.db.query("chamas").collect())).toHaveLength(before.length);
+});

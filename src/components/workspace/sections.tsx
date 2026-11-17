@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useMutation, useAction } from "convex/react";
+import { useMutation } from "convex/react";
 import { Download, Printer, ShieldCheck } from "lucide-react";
 import { api } from "../../../convex/_generated/api";
 import {
@@ -536,9 +536,17 @@ function Loans() {
             },
           ]}
         />
-        {canFinance && (
+        {canFinance && (active.length === 0 ? (
+          <section className="workspace-card">
+            <h2 className="workspace-section-heading">Record loan repayment</h2>
+            <p className="workspace-page-description">No loans are ready for repayment. A loan appears here after approval and recorded disbursement.</p>
+            {loans.some(l => l.status === "pending_approval") && <p>Pending applications must be approved by a chairperson or administrator other than the borrower.</p>}
+            {loans.some(l => l.status === "approved") && <p>Approved loans still need a chairperson or treasurer to record disbursement using the action above.</p>}
+          </section>
+        ) : (
           <FormPanel
             title="Record loan repayment"
+            description="Select a disbursed loan and record money already received. Pending and approved-but-undisbursed loans are excluded."
             operation="repay_loan"
             fields={[
               {
@@ -547,7 +555,7 @@ function Loans() {
                 type: "select",
                 options: active.map((l) => ({
                   value: l._id,
-                  label: `${l.memberName} · ${l.purpose}`,
+                  label: `${l.memberName} · ${l.purpose} · ${money(l.remaining)} remaining`,
                 })),
               },
               {
@@ -558,7 +566,7 @@ function Loans() {
               ...paymentFields,
             ]}
           />
-        )}
+        ))}
       </div>
       <section className="workspace-stack">
         <h2 className="workspace-section-heading">Repayment schedules</h2>
@@ -818,27 +826,9 @@ function Investments() {
   );
 }
 
-function Intelligence() {
-  const { chama, member, creditScores } = useWorkspace();
-  const generate = useAction(api.workspace.generateInsights);
-  const [result, setResult] = useState<{ text: string; generatedAt: number } | null>(null);
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  const canGenerate = (FINANCE_ROLES as readonly string[]).includes(member.role);
-  async function run() {
-    setBusy(true); setError(""); setResult(null);
-    try { setResult(await generate({ chamaId: chama._id })); }
-    catch (e) { setError(e instanceof Error && e.message.includes("not configured") ? "AI insights are not configured. Ask your administrator to configure the AI service." : "Unable to generate insights. Check your access and AI configuration, or retry in one minute."); }
-    finally { setBusy(false); }
-  }
+function CreditHistory() {
+  const { creditScores } = useWorkspace();
   return <>
-    {canGenerate && <section className="workspace-card">
-      <h2 className="workspace-section-heading">AI financial insights</h2>
-      <p>Generate observations from the current group totals and six-month cash flow. Only aggregate figures are sent to OpenAI.</p>
-      <button type="button" className="workspace-button" disabled={busy} onClick={run}>{busy ? "Generating insights…" : "Generate insights"}</button>
-      {error && <p role="alert">{error}</p>}
-      {result && <div aria-live="polite"><p style={{ whiteSpace: "pre-wrap" }}>{result.text}</p><small>Generated {new Date(result.generatedAt).toLocaleString("en-KE", { timeZone: "Africa/Nairobi" })}. Snapshot of manually recorded data; review against current records.</small></div>}
-    </section>}
     <section className="workspace-card">
       <h2 className="workspace-section-heading">Credit history scores</h2>
       <p>Internal history indicator (0–100), version 1. Officers make lending decisions. This is not a credit bureau score or a prediction of repayment.</p>
@@ -870,7 +860,7 @@ function Analytics() {
       />
       <div className="workspace-stack">
         <CashFlowChart />
-        <Intelligence />
+        <CreditHistory />
         <section className="workspace-card">
           <h2 className="workspace-section-heading">
             Contribution performance

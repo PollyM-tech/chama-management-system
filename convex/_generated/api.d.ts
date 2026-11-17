@@ -17,6 +17,7 @@ import type * as lib_admin_access from "../lib/admin_access.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_email from "../lib/email.js";
 import type * as lib_ledger from "../lib/ledger.js";
+import type * as lib_meetings from "../lib/meetings.js";
 import type * as members from "../members.js";
 import type * as users from "../users.js";
 import type * as workspace from "../workspace.js";
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   "lib/auth": typeof lib_auth;
   "lib/email": typeof lib_email;
   "lib/ledger": typeof lib_ledger;
+  "lib/meetings": typeof lib_meetings;
   members: typeof members;
   users: typeof users;
   workspace: typeof workspace;

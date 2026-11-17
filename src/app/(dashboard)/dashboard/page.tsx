@@ -11,6 +11,7 @@ import {
   requestedWorkspaceSection,
   preferredChamaId,
 } from "@/lib/chama-navigation";
+import { roleLabel } from "../../../../shared/workspace";
 import { api } from "../../../../convex/_generated/api";
 
 export default function DashboardPage() {
@@ -26,6 +27,7 @@ function DashboardContent() {
   const params = useSearchParams();
   const section = requestedWorkspaceSection(params.get("section"));
   const choosing = params.has("choose");
+  const [creatorRole, setCreatorRole] = useState<"chairperson" | "treasurer" | "secretary" | "member">("chairperson");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -52,11 +54,20 @@ function DashboardContent() {
         name: String(data.get("name")),
         contributionAmount: Number(data.get("amount")),
         contributionCycle: "monthly",
+        role: creatorRole,
+        chairpersonEmail: creatorRole === "chairperson" ? undefined : String(data.get("chairpersonEmail") ?? "").trim(),
       });
       form.reset();
       router.push(groupSectionPath(chamaId, section));
-    } catch {
-      setError("Unable to create your chama. Check the details and try again.");
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : "";
+      setError(message.includes("VERIFIED_CHAIRPERSON_REQUIRED")
+        ? "The chairperson must first create an account and verify their email."
+        : message.includes("DIFFERENT_CHAIRPERSON_REQUIRED")
+          ? "Enter another person’s email for the chairperson, or choose Chairperson as your role."
+          : message.includes("CHAIRPERSON_EMAIL_REQUIRED")
+            ? "Enter the chairperson’s verified account email."
+            : "Unable to create your chama. Check the details and try again.");
     } finally {
       setBusy(false);
     }
@@ -93,7 +104,7 @@ function DashboardContent() {
               </span>
               <h2 className="text-lg font-semibold [overflow-wrap:anywhere]">{chama.name}</h2>
               <p className="mt-2 text-sm text-zinc-600">
-                Your role: {chama.role}
+                Your role: {roleLabel(chama.role)}
               </p>
               <span className="mt-5 flex items-center gap-2 text-sm font-medium text-emerald-800">
                 Open dashboard{" "}
@@ -114,7 +125,7 @@ function DashboardContent() {
           {chamas?.length ? "Create another chama" : "Create a chama"}
         </summary>
         <p className="mt-2 text-sm text-zinc-600">
-          You’ll be the administrator of your new group.
+          Choose your role in the new group. A chairperson manages membership access and loan approvals.
         </p>
         <form onSubmit={createChama} className="mt-5 space-y-4">
           <label className="block text-sm font-medium">
@@ -137,6 +148,17 @@ function DashboardContent() {
               className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2"
             />
           </label>
+          <label className="block text-sm font-medium">
+            Your role
+            <select name="role" value={creatorRole} onChange={e => setCreatorRole(e.target.value as typeof creatorRole)} className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2">
+              {["chairperson", "treasurer", "secretary", "member"].map(role => <option key={role} value={role}>{roleLabel(role)}</option>)}
+            </select>
+          </label>
+          {creatorRole !== "chairperson" && <label className="block text-sm font-medium">
+            Chairperson’s email
+            <input name="chairpersonEmail" type="email" required aria-describedby="chairperson-help" className="mt-2 w-full rounded-lg border border-zinc-300 px-3 py-2" />
+            <span id="chairperson-help" className="mt-2 block text-xs text-zinc-500">Use another person’s verified SmartChama account. They will be added as chairperson when you create the group.</span>
+          </label>}
           {error && (
             <p role="alert" className="text-sm text-red-700">
               {error}
