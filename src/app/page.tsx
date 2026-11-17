@@ -38,6 +38,7 @@ const links = [
   { label: "How it works", href: "#how-it-works" },
   { label: "Pricing", href: "#pricing" },
   { label: "About us", href: "#about" },
+  { label: "Testimonials", href: "#testimonials" },
   { label: "FAQs", href: "#faqs" },
 ];
 
@@ -288,18 +289,21 @@ export default function Home() {
       </section>
 
       <section
+        id="testimonials"
         className="landing-voices landing-container"
         aria-labelledby="voices-heading"
       >
         <div className="section-heading">
-          <span className="section-kicker">DESIGNED AROUND YOUR CHAMA</span>
-          <h2 id="voices-heading">Every Member Has a Voice</h2>
+          <span className="section-kicker">TESTIMONIALS</span>
+          <h2 id="voices-heading">A clearer view. A stronger chama.</h2>
+          <p className="testimonials-intro">From keeping the books to planning the next meeting, every role deserves a simpler day.</p>
+          <p className="testimonials-disclosure">Illustrative testimonials for this preview. These are sample perspectives, not verified customer reviews.</p>
         </div>
         <div className="voices-grid">
           {[
             {
               quote:
-                "A clear record of every contribution, so the numbers are easier to explain and everyone stays on the same page.",
+                "I want every contribution in one place, so I can explain the numbers clearly and spend less time chasing records.",
               initials: "TR",
               role: "For the treasurer",
               need: "Clarity in every record",
@@ -307,7 +311,7 @@ export default function Home() {
             },
             {
               quote:
-                "One view of the group, so meetings can focus on the next opportunity instead of tracking down updates.",
+                "A shared view of our finances would help us spend our meetings planning our next step together.",
               initials: "CH",
               role: "For the chairperson",
               need: "Confidence in every decision",
@@ -315,7 +319,7 @@ export default function Home() {
             },
             {
               quote:
-                "A simple way to understand my savings and follow our progress, with a role that fits my place in the chama.",
+                "I want to see what I have contributed and what I still owe, without waiting for the next group meeting.",
               initials: "ME",
               role: "For every member",
               need: "A place in the bigger picture",
@@ -324,7 +328,7 @@ export default function Home() {
           ].map((voice, index) => (
             <article className="voice-card" key={voice.role}>
               <MessageCircle size={24} fill="currentColor" strokeWidth={0} />
-              <p>{voice.quote}</p>
+              <p><q>{voice.quote}</q></p>
               <div>
                 <PhotoAvatar person={index} className="voice-avatar" />
                 <span>
@@ -335,9 +339,10 @@ export default function Home() {
             </article>
           ))}
         </div>
-        <p className="voices-note">
-          Illustrative member perspectives, not customer testimonials.
-        </p>
+        <div className="testimonials-footer">
+          <span>Build your group’s next chapter together.</span>
+          <Link href={signUp} className="landing-button button-green">Create your chama <ArrowRight size={16} /></Link>
+        </div>
       </section>
 
       <section id="pricing" className="landing-pricing landing-container">
@@ -462,7 +467,7 @@ export default function Home() {
             <nav aria-label="Learn about SmartChama" className="site-footer-links">
               <h2>Learn more</h2>
               <a href="#about">About SmartChama</a>
-              <a href="#voices-heading">Member stories</a>
+              <a href="#testimonials">Testimonials</a>
               <a href="#faqs">Frequently asked questions</a>
             </nav>
             <nav aria-label="SmartChama account" className="site-footer-links site-footer-account">
