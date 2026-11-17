@@ -4,7 +4,6 @@ import "./globals.css";
 import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import { ConvexClientProvider } from "./convex-client-provider";
 import { BRAND_NAME, BRAND_TAGLINE } from "../../shared/brand";
-import logo from "./logo.png";
 
 const geistSans = localFont({
   src: "./fonts/geist-latin.woff2",
@@ -24,7 +23,6 @@ export const metadata: Metadata = {
   title: { default: BRAND_NAME, template: `%s | ${BRAND_NAME}` },
   applicationName: BRAND_NAME,
   description: BRAND_TAGLINE,
-  icons: { apple: logo.src },
 };
 
 export default function RootLayout({

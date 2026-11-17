@@ -25,6 +25,7 @@ import {
   Stats,
   Table,
 } from "./widgets";
+import { ProfilePhoto, Avatar } from "@/components/profile/profile-photo";
 import { Meetings } from "./meetings";
 import { InvitationsPanel } from "./invitations-panel";
 
@@ -257,7 +258,7 @@ function Members() {
             ...(canAdmin ? ["Manage access"] : []),
           ]}
           rows={members.map((m) => [
-            m.name,
+            <span key="member" className="flex items-center gap-3"><Avatar name={m.name} url={m.photoUrl} /><span>{m.name}</span></span>,
             m.email || "Private",
             roleLabel(m.role),
             <Badge key="status" value={m.isActive ? "active" : "inactive"} />,
@@ -1142,6 +1143,7 @@ function Settings() {
   const { chama, member, canAdmin } = useAccess();
   return (
     <div className="workspace-stack">
+      <ProfilePhoto />
       <FormPanel
         title="Your profile"
         operation="update_profile"

@@ -360,3 +360,36 @@ test("non-chairperson creation requires a different verified chairperson and rol
   await expect(outsider.mutation(api.chamas.create, { ...input, chairpersonEmail: "outsider@example.com" })).rejects.toThrow("DIFFERENT_CHAIRPERSON_REQUIRED");
   expect(await t.run(ctx => ctx.db.query("chamas").collect())).toHaveLength(before.length);
 });
+
+test("profile pictures are optional, account-owned, and cleaned up on replacement/removal", async () => {
+  const { t, admin, member, outsider, ids } = await fixture();
+  const bytes = new Uint8Array([255, 216, 255, 224, 0, 16, 255, 217]).buffer;
+  expect((await admin.query(api.users.current, {})).photoUrl).toBeNull();
+  await admin.action(api.users.uploadPhoto, { bytes });
+  const first = await t.run(ctx => ctx.db.query("profilePhotos").unique());
+  expect(first?.userId).toBe(ids.admin);
+  expect((await admin.query(api.users.current, {})).photoUrl).toBeTruthy();
+  expect((await member.query(api.users.current, {})).photoUrl).toBeNull();
+  const directory = await member.query(api.workspace.get, { chamaId: ids.chama });
+  expect(directory.members.find(m => m._id === ids.adminMember)?.photoUrl).toBeTruthy();
+  await expect(outsider.query(api.workspace.get, { chamaId: ids.chama })).rejects.toThrow("FORBIDDEN");
+  await member.mutation(api.users.removePhoto, {});
+  expect((await admin.query(api.users.current, {})).photoUrl).toBeTruthy();
+  await admin.action(api.users.uploadPhoto, { bytes });
+  const second = await t.run(ctx => ctx.db.query("profilePhotos").unique());
+  expect(second?.storageId).not.toBe(first?.storageId);
+  expect(await t.run(ctx => ctx.db.system.get(first!.storageId))).toBeNull();
+  await admin.mutation(api.users.removePhoto, {});
+  expect(await t.run(ctx => ctx.db.system.get(second!.storageId))).toBeNull();
+  expect((await admin.query(api.users.current, {})).photoUrl).toBeNull();
+});
+
+test("profile uploads reject unauthenticated, unverified, oversized, or non-image inputs", async () => {
+  const { t, admin, unverified } = await fixture();
+  const bytes = new Uint8Array([255, 216, 255, 224, 255, 217]).buffer;
+  await expect(t.action(api.users.uploadPhoto, { bytes })).rejects.toThrow("UNAUTHENTICATED");
+  await expect(unverified.action(api.users.uploadPhoto, { bytes })).rejects.toThrow("EMAIL_NOT_VERIFIED");
+  await expect(admin.action(api.users.uploadPhoto, { bytes: new TextEncoder().encode("<svg>not allowed</svg>").buffer })).rejects.toThrow("INVALID_PROFILE_PHOTO");
+  await expect(admin.action(api.users.uploadPhoto, { bytes: new Uint8Array(500001).buffer })).rejects.toThrow("INVALID_PROFILE_PHOTO");
+  expect(await t.run(ctx => ctx.db.query("profilePhotos").collect())).toHaveLength(0);
+});

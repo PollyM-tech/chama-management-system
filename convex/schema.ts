@@ -4,6 +4,7 @@ import { authTables } from "@convex-dev/auth/server";
 
 export default defineSchema({
   ...authTables,
+  profilePhotos: defineTable({ userId: v.id("users"), storageId: v.id("_storage") }).index("by_user", ["userId"]),
   meetings: defineTable({
     chamaId: v.id("chamas"), title: v.string(), location: v.string(),
     startsAt: v.number(), agenda: v.string(),

@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import logo from "@/app/logo.png";
-import { BRAND_NAME, BRAND_TAGLINE } from "../../shared/brand";
+import { BRAND_NAME, BRAND_TAGLINE, BRAND_LOGO_SRC } from "../../shared/brand";
 
 export function BrandLogo({
   href = "/",
@@ -10,42 +9,25 @@ export function BrandLogo({
   href?: string;
   size?: "compact" | "large" | "navigation" | "header";
 }) {
-  if (size === "navigation") {
-    return (
-      <Link
-        href={href}
-        aria-label={`${BRAND_NAME} home`}
-        className="landing-brand"
-      >
-        <span className="landing-brand-mark" aria-hidden="true">
-          <Image
-            src={logo}
-            alt=""
-            sizes="80px"
-            className="landing-brand-mark-image"
-          />
-        </span>
-        <span>
-          Smart<span className="landing-brand-accent">Chama</span>
-        </span>
-      </Link>
-    );
-  }
-  // The supplied artwork has white padding. Frame it with CSS so the complete
-  // mark, wordmark and tagline remain readable without changing the source file.
+  const widths = {
+    navigation: "w-28 sm:w-32",
+    large: "w-64",
+    header: "w-32",
+    compact: "w-44",
+  };
   return (
     <Link
       href={href}
       aria-label={`${BRAND_NAME} home`}
-      className={`relative block max-w-full shrink-0 overflow-hidden rounded bg-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700 ${size === "large" ? "h-36 w-64" : size === "header" ? "h-20 w-36" : "h-28 w-48"}`}
+      className={`${size === "navigation" ? "landing-brand " : ""}block ${widths[size]} max-w-full shrink-0 bg-transparent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700`}
     >
       <Image
-        src={logo}
+        src={BRAND_LOGO_SRC}
         alt={`${BRAND_NAME} — ${BRAND_TAGLINE}`}
-        className={`absolute left-0 h-auto w-full ${size === "large" ? "-top-8" : size === "header" ? "-top-5" : "-top-6"}`}
-        sizes={
-          size === "large" ? "256px" : size === "header" ? "144px" : "192px"
-        }
+        width={1165}
+        height={930}
+        className="block h-auto w-full"
+        sizes={size === "large" ? "256px" : size === "compact" ? "176px" : "128px"}
         loading="eager"
       />
     </Link>

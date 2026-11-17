@@ -101,6 +101,10 @@ export const get = query({
             .take(100)
         : [],
     ]);
+    const photoUrls = new Map(await Promise.all(members.map(async m => {
+      const photo = await ctx.db.query("profilePhotos").withIndex("by_user", q => q.eq("userId", m.userId)).unique();
+      return [m._id, photo ? await ctx.storage.getUrl(photo.storageId) : null] as const;
+    })));
     const names = new Map(members.map((m) => [m._id, m.name]));
     const cycleNames = new Map(cycles.map((c) => [c._id, c.name]));
     const collected = cents(
@@ -194,11 +198,12 @@ export const get = query({
         ...creditAssessment(enrichedContributions.filter(c => c.memberId === m._id), loans.filter(l => l.memberId === m._id), Date.now()),
       })),
       chama,
-      member,
+      member: { ...member, photoUrl: photoUrls.get(member._id) ?? null },
       officer,
       members: members.map((m) => ({
         _id: m._id,
         name: m.name,
+        photoUrl: photoUrls.get(m._id) ?? null,
         role: m.role,
         isActive: m.isActive,
         joinedAt: m.joinedAt,

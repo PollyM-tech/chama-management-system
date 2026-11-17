@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { convexAuthNextjsToken } from "@convex-dev/auth/nextjs/server";
 import { fetchQuery } from "convex/nextjs";
 import { redirect } from "next/navigation";
@@ -28,7 +29,7 @@ export default async function DashboardLayout({
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
       <header className="workspace-app-header flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-2 sm:px-6">
         <BrandLogo href="/dashboard" size="header" />
-        <SignOutButton />
+        <div className="flex items-center gap-4"><Link href="/profile" className="text-sm font-medium text-emerald-800">Your profile</Link><SignOutButton /></div>
       </header>
       <main className="mx-auto w-full max-w-[1440px] px-3 py-5 sm:px-6 sm:py-7 lg:px-8">
         {children}

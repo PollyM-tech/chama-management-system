@@ -108,3 +108,13 @@ Meetings are under `/dashboard/<chamaId>/meetings`. Officers schedule/update/can
 
 
 When creating a group, choose Chairperson, Treasurer, Secretary, or Member. Chairperson is the default. Choosing another role requires another verified user's email; that person is added as chairperson atomically with group creation. Roles in existing groups are unaffected. Older API clients that omit the role retain the previous admin default.
+
+
+## Optional profile pictures
+
+After verifying an account, users can open **Your profile** in the signed-in header, or the profile picture panel in group Settings. A photo is optional for account creation, chama creation, and invitation acceptance. Upload JPG, PNG, or WebP files up to 10 MB; the browser resizes them to at most 768 pixels and converts to JPEG before upload (500 KB maximum). A single account photo appears in that user's member-directory entries across groups. Users can replace or remove only their own photo. Replaced and removed files are deleted from Convex storage. Photos are served using Convex storage URLs. Deploy the `profilePhotos` table and updated functions before using this feature.
+
+
+## Brand artwork
+
+`public/brand/logo.png` is the authoritative logo. Every `BrandLogo` placement uses the same complete artwork (symbol, wordmark, and tagline), with only the surrounding white margin trimmed in `public/brand/logo-display.png`. Navigation no longer recreates the wordmark with text. Run `node scripts/generate-brand-icons.mjs` after replacing the authoritative logo to regenerate the display asset, favicon, app icon, and Apple icon. The generator never overwrites the original public logo.
