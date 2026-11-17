@@ -97,7 +97,7 @@ Backend tests use `convex-test` with isolated in-memory data. They cover authent
 
 Configure a separate production Convex deployment, initialize its auth keys, set its email credentials and production `SITE_URL`, and deploy the backend. Configure the matching public Convex cloud/site URLs in your Next.js hosting environment before building. Convex Auth's Next.js server integration is experimental; see the [official setup guide](https://labs.convex.dev/auth/setup).
 
-The schema links memberships with `userId: Id<"users">` instead of `workosUserId` and types chama `createdBy` as a Convex user ID. Existing WorkOS-backed data needs an explicit migration before using this schema. The added workspace tables are applied by `npx convex dev --once` to the selected development deployment.
+Memberships use `userId: Id<"users">` and group `createdBy` references a Convex Auth user. The configured development deployment was audited on 17 November 2026: all 26 existing tables (31 records) were checked for WorkOS field names and identifiers, with no legacy records found. All membership user references and group creator references resolved to existing Convex users, so no data migration or deletion was necessary. The empty legacy WorkOS module was removed. This audit does not cover other deployments. The added workspace tables are applied by `npx convex dev --once` to the selected development deployment.
 
 
 ## Legacy routes and meetings
